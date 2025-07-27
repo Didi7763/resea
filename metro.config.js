@@ -1,8 +1,20 @@
-const { getDefaultConfig } = require('expo/metro-config');
+const { getDefaultConfig } = require("expo/metro-config");
 
-const config = getDefaultConfig(__dirname);
+const defaultConfig = getDefaultConfig(__dirname);
 
-// Assurer la compatibilité Hermes
-config.transformer.hermesParser = true;
+defaultConfig.resolver.extraNodeModules = {
+  ...defaultConfig.resolver.extraNodeModules,
+  "react-native-maps": require.resolve("./empty-module.js"), // crée ce fichier
+};
 
-module.exports = config;
+defaultConfig.resolver.resolveRequest = (context, moduleName, platform) => {
+  if (platform === "web" && moduleName === "react-native-maps") {
+    return {
+      type: "sourceFile",
+      filePath: require.resolve("./empty-module.js"),
+    };
+  }
+  return context.resolveRequest(context, moduleName, platform);
+};
+
+module.exports = defaultConfig;
