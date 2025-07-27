@@ -1,28 +1,30 @@
-import { FONTS } from '@/constants/fonts';
-import { ThemeProvider } from '@/theme/ThemeProvider';
-import { useFonts } from 'expo-font';
-import { Stack } from 'expo-router';
-import * as SplashScreen from 'expo-splash-screen';
-import { useEffect } from 'react';
-import { LogBox } from 'react-native';
-import 'react-native-reanimated';
+import React from "react";
+import "react-native-reanimated";
+
+import { FONTS } from "@/constants/fonts";
+import { ThemeProvider } from "@/theme/ThemeProvider";
+import { useFonts } from "expo-font";
+import { Stack } from "expo-router";
+import * as SplashScreen from "expo-splash-screen";
+import { useEffect, FC } from "react";
+import { LogBox } from "react-native";
 
 // Prevent the splash screen from auto-hiding before asset loading is complete.
 SplashScreen.preventAutoHideAsync();
 
-//Ignore all log notifications
-LogBox.ignoreAllLogs();
+// Ignore specific log notifications (au lieu de tout ignorer)
+LogBox.ignoreLogs(["Warning: ...", "Deprecation warning: ..."]);
 
-export default function RootLayout() {
-  const [loaded] = useFonts(FONTS);
+const RootLayout: FC = () => {
+  const [fontsLoaded] = useFonts(FONTS);
 
   useEffect(() => {
-    if (loaded) {
+    if (fontsLoaded) {
       SplashScreen.hideAsync();
     }
-  }, [loaded]);
+  }, [fontsLoaded]);
 
-  if (!loaded) {
+  if (!fontsLoaded) {
     return null;
   }
 
@@ -75,4 +77,6 @@ export default function RootLayout() {
       </Stack>
     </ThemeProvider>
   );
-}
+};
+
+export default RootLayout;
