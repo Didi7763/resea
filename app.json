@@ -5,44 +5,32 @@
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
-    "scheme": "reasa",
     "userInterfaceStyle": "automatic",
-    "newArchEnabled": false,
-    "ios": { "supportsTablet": true },
+    "ios": {
+      "supportsTablet": true
+    },
     "android": {
       "adaptiveIcon": {
         "foregroundImage": "./assets/images/adaptive-icon.png",
         "backgroundColor": "#ffffff"
       },
-      "edgeToEdgeEnabled": true
+      "package": "com.didier23.Reasa"
     },
     "web": {
-      "bundler": "metro",
-      "output": "static",
       "favicon": "./assets/images/favicon.png"
     },
-    "plugins": [
-      "expo-router",
-      ["expo-splash-screen", {
-        "image": "./assets/images/splash-icon.png",
-        "imageWidth": 200,
-        "resizeMode": "contain",
-        "backgroundColor": "#ffffff"
-      }],
-      "expo-web-browser"
-    ],
     "experiments": {
       "typedRoutes": true
     },
     "updates": {
       "enabled": true,
-      "checkAutomatically": "ON_LOAD",
-      "fallbackToCacheTimeout": 0,
-      "url": "https://u.expo.dev/TON_PROJECT_ID",
-      "rustBinarySource": "expo-updates-internal"
+      "checkAutomatically": "ON_LOAD"
     },
-    "runtimeVersion": {
-      "policy": "appVersion"
-    }
+    "extra": {
+      "eas": {
+        "projectId": "377fa6f1-fa62-43c5-9fde-df7e8b8cb6ea"
+      }
+    },
+    "owner": "macdy007"
   }
 }
