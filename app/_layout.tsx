@@ -36,6 +36,8 @@ const RootLayout: FC = () => {
         <Stack.Screen name="welcome" />
         <Stack.Screen name="login" />
         <Stack.Screen name="signup" />
+        <Stack.Screen name="professional-signup" />
+        <Stack.Screen name="createnewpassword" />
         <Stack.Screen name="forgotpasswordmethods" />
         <Stack.Screen name="forgotpasswordphonenumber" />
         <Stack.Screen name="forgotpasswordemail" />

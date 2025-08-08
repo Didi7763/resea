@@ -16,8 +16,16 @@ export const COLORS = {
     white: "#FFFFFF",
     secondaryWhite: "#F8F8F8",
     tertiaryWhite: "#F7F7F7",
-    greeen: "#0ABE75",
-    red: "#f65554",
+    
+    // CORRECTION : greeen -> green
+    green: "#0ABE75", // Corrigé de "greeen"
+    
+    // AJOUTS pour l'authentification
+    red: "#F75555", // Utilisé dans l'auth
+    orange: "#FF9500", // Nouveau
+    yellow: "#FFCC00", // Nouveau
+    blue: "#246BFD", // Alias pour primary
+    
     gray: "#9E9E9E",
     gray2: "#35383F",
     gray3: "#9E9E9E",
@@ -33,6 +41,12 @@ export const COLORS = {
     greyscale600: "#757575",
     grayscale200: "#EEEEEE",
     grayscale100: "#F5F5F5",
+    
+    // AJOUTS grayscale manquants
+    grayscale600: "#757575", // Ajouté pour consistance
+    grayscale500: "#9E9E9E", // Ajouté
+    grayscale300: "#E0E0E0", // Ajouté
+    
     tansparentPrimary: "rgba(36, 107, 253, 0.08)",
     transparentSecondary: "rgba(108,77,218, .15)",
     transparentTertiary: "rgba(51, 94, 247, .1)",
@@ -42,19 +56,18 @@ export const COLORS = {
     blackTie: "#474747",
     grayTie: '#BCBCBC',
 
-        // color and background color for notifications
-        security: '#246BFD',
-        card: "#FB9400",
-        payment: "#6949FF",
-        update: "#FF5A5F",
-        account: "#1BAC4B",
-        transparentSecurity: "rgba(36, 107, 253, 0.08)",
-        transparentCard: "rgba(251, 148, 0, 0.08)",
-        transparentPayment: "rgba(105, 73, 255, 0.08)",
-        transparentUpdate: "rgba(255, 90, 95, 0.08)",
-        transparentAccount: "rgba(27, 172, 75, 0.08)",
-        transparentPrimary: "rgba(36, 107, 253, 0.08)",
-    
+    // color and background color for notifications
+    security: '#246BFD',
+    card: "#FB9400",
+    payment: "#6949FF",
+    update: "#FF5A5F",
+    account: "#1BAC4B",
+    transparentSecurity: "rgba(36, 107, 253, 0.08)",
+    transparentCard: "rgba(251, 148, 0, 0.08)",
+    transparentPayment: "rgba(105, 73, 255, 0.08)",
+    transparentUpdate: "rgba(255, 90, 95, 0.08)",
+    transparentAccount: "rgba(27, 172, 75, 0.08)",
+    transparentPrimary: "rgba(36, 107, 253, 0.08)",
 };
 
 export const SIZES = {
@@ -93,8 +106,6 @@ export const FONTS = {
     body3: { fontFamily: 'regular', fontSize: SIZES.body3, lineHeight: 22, color: "black" },
     body4: { fontFamily: 'regular', fontSize: SIZES.body4, lineHeight: 20, color: "black" },
 };
-
-
 
 const appTheme = { COLORS, SIZES, FONTS };
 

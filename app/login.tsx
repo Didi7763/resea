@@ -1,32 +1,43 @@
-import Checkbox from 'expo-checkbox';
-import { useNavigation } from 'expo-router';
-import React, { useCallback, useEffect, useReducer, useState } from 'react';
-import { Alert, Image, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import React, { useState, useCallback, useReducer, useEffect } from 'react';
+import {
+  View,
+  Text,
+  StyleSheet,
+  TouchableOpacity,
+  Image,
+  Alert,
+  KeyboardAvoidingView,
+  Platform,
+  Dimensions
+} from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import Button from '../components/Button';
-import Header from '../components/Header';
-import Input from '../components/Input';
-import OrSeparator from '../components/OrSeparator';
-import SocialButton from '../components/SocialButton';
+import { ScrollView } from 'react-native-virtualized-view';
+import { LinearGradient } from 'expo-linear-gradient';
+import { Ionicons } from '@expo/vector-icons';
+import Checkbox from 'expo-checkbox';
+import { useRouter } from 'expo-router';
+
 import { COLORS, SIZES, icons, images } from '../constants';
 import { useTheme } from '../theme/ThemeProvider';
+import Button from '../components/Button';
+import Input from '../components/Input';
+import SocialButton from '../components/SocialButton';
+import OrSeparator from '../components/OrSeparator';
 import { validateInput } from '../utils/actions/formActions';
 import { reducer } from '../utils/reducers/formReducers';
 
-interface InputValues {
-  email: string
-  password: string
-}
-
-interface InputValidities {
-  email: boolean | undefined
-  password: boolean | undefined
-}
+const { width, height } = Dimensions.get('window');
 
 interface FormState {
-  inputValues: InputValues
-  inputValidities: InputValidities
-  formIsValid: boolean
+  inputValues: {
+    email: string;
+    password: string;
+  };
+  inputValidities: {
+    email: boolean | undefined;
+    password: boolean | undefined;
+  };
+  formIsValid: boolean;
 }
 
 const initialState: FormState = {
@@ -39,239 +50,306 @@ const initialState: FormState = {
     password: false,
   },
   formIsValid: false,
-}
-
-type Nav = {
-  navigate: (value: string) => void
-}
+};
 
 const Login = () => {
-  const { navigate } = useNavigation<Nav>();
-  const [formState, dispatchFormState] = useReducer(reducer, initialState);
-  const [error, setError] = useState(null);
-  const [isChecked, setChecked] = useState(false);
+  const router = useRouter();
   const { colors, dark } = useTheme();
+  const [formState, dispatchFormState] = useReducer(reducer, initialState);
+  const [error, setError] = useState<string | null>(null);
+  const [isChecked, setChecked] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
 
   const inputChangedHandler = useCallback(
     (inputId: string, inputValue: string) => {
-      const result = validateInput(inputId, inputValue)
+      const result = validateInput(inputId, inputValue);
       dispatchFormState({
         inputId,
         validationResult: result,
         inputValue,
-      })
-    }, [dispatchFormState])
+      });
+    },
+    [dispatchFormState]
+  );
 
   useEffect(() => {
     if (error) {
-      Alert.alert('An error occured', error)
+      Alert.alert('Erreur de connexion', error);
     }
   }, [error]);
 
-  // Implementing apple authentication
+  const handleLogin = async () => {
+    setIsLoading(true);
+    try {
+      // Simulation d'une connexion réussie
+      setTimeout(() => {
+        setIsLoading(false);
+        router.replace('/(tabs)');
+      }, 2000);
+    } catch (err) {
+      setIsLoading(false);
+      setError('Email ou mot de passe incorrect');
+    }
+  };
+
   const appleAuthHandler = () => {
-    console.log("Apple Authentication")
+    console.log('Apple Authentication');
+    router.replace('/(tabs)');
   };
 
-  // Implementing facebook authentication
   const facebookAuthHandler = () => {
-    console.log("Facebook Authentication")
+    console.log('Facebook Authentication');
+    router.replace('/(tabs)');
   };
 
-  // Implementing google authentication
   const googleAuthHandler = () => {
-    console.log("Google Authentication")
+    console.log('Google Authentication');
+    router.replace('/(tabs)');
   };
 
   return (
-    <SafeAreaView style={[styles.area, {
-      backgroundColor: colors.background
-    }]}>
-      <View style={[styles.container, {
-        backgroundColor: colors.background
-      }]}>
-        <Header title="" />
-        <ScrollView showsVerticalScrollIndicator={false}>
-          <View style={styles.logoContainer}>
-            <Image
-              source={images.logo}
-              resizeMode='contain'
-              style={styles.logo}
-            />
+    <SafeAreaView style={[styles.area, { backgroundColor: colors.background }]}>
+      <KeyboardAvoidingView
+        style={styles.container}
+        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+      >
+        <LinearGradient
+          colors={[
+            dark ? COLORS.dark1 : COLORS.white,
+            dark ? COLORS.dark2 : COLORS.tertiaryWhite,
+          ]}
+          style={styles.gradientContainer}
+        >
+          {/* Header */}
+          <View style={styles.header}>
+            <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
+              <Ionicons
+                name="arrow-back"
+                size={24}
+                color={dark ? COLORS.white : COLORS.black}
+              />
+            </TouchableOpacity>
           </View>
-          <Text style={[styles.title, {
-            color: dark ? COLORS.white : COLORS.black
-          }]}>Login to Your Account</Text>
-          <Input
-            id="email"
-            onInputChanged={inputChangedHandler}
-            errorText={formState.inputValidities['email']}
-            placeholder="Email"
-            placeholderTextColor={dark ? COLORS.grayTie : COLORS.black}
-            icon={icons.email}
-            keyboardType="email-address"
-          />
-          <Input
-            onInputChanged={inputChangedHandler}
-            errorText={formState.inputValidities['password']}
-            autoCapitalize="none"
-            id="password"
-            placeholder="Password"
-            placeholderTextColor={dark ? COLORS.grayTie : COLORS.black}
-            icon={icons.padlock}
-            secureTextEntry={true}
-          />
-          <View style={styles.checkBoxContainer}>
-            <Checkbox
-              style={styles.checkbox}
-              value={isChecked}
-              color={isChecked ? COLORS.primary : dark ? COLORS.primary : "gray"}
-              onValueChange={setChecked}
-            />
-            <Text style={[styles.privacy, {
-              color: dark ? COLORS.white : COLORS.black
-            }]}>Remenber me</Text>
-          </View>
-          <Button
-            title="Login"
-            filled
-            onPress={() => navigate("(tabs)")}
-            style={styles.button}
-          />
-          <TouchableOpacity
-            onPress={() => navigate("forgotpasswordmethods")}>
-            <Text style={styles.forgotPasswordBtnText}>Forgot the password?</Text>
-          </TouchableOpacity>
-          <View>
 
-            <OrSeparator text="or continue with" />
-            <View style={styles.socialBtnContainer}>
-              <SocialButton
-                icon={icons.appleLogo}
-                onPress={appleAuthHandler}
-                tintColor={dark ? COLORS.white : COLORS.black}
-              />
-              <SocialButton
-                icon={icons.facebook}
-                onPress={facebookAuthHandler}
-              />
-              <SocialButton
-                icon={icons.google}
-                onPress={googleAuthHandler}
-              />
+          <ScrollView showsVerticalScrollIndicator={false} style={styles.scrollView}>
+            {/* Logo */}
+            <View style={styles.logoContainer}>
+              <Image source={images.logo} resizeMode="contain" style={styles.logo} />
+              <Text style={[styles.welcomeText, { color: colors.text }]}>
+                Bon retour !
+              </Text>
+              <Text style={[styles.subtitle, { color: dark ? COLORS.grayscale400 : COLORS.grayscale700 }]}>
+                Connectez-vous à votre compte REASA
+              </Text>
             </View>
+
+            {/* Form */}
+            <View style={styles.formContainer}>
+              <Input
+                id="email"
+                onInputChanged={inputChangedHandler}
+                errorText={formState.inputValidities['email']}
+                placeholder="Email ou numéro de téléphone"
+                placeholderTextColor={dark ? COLORS.grayTie : COLORS.grayscale600}
+                icon={icons.email}
+                keyboardType="email-address"
+              />
+              
+              <View style={styles.passwordContainer}>
+                <Input
+                  id="password"
+                  onInputChanged={inputChangedHandler}
+                  errorText={formState.inputValidities['password']}
+                  autoCapitalize="none"
+                  placeholder="Mot de passe"
+                  placeholderTextColor={dark ? COLORS.grayTie : COLORS.grayscale600}
+                  icon={icons.padlock}
+                  secureTextEntry={!showPassword}
+                />
+                <TouchableOpacity
+                  style={styles.passwordToggle}
+                  onPress={() => setShowPassword(!showPassword)}
+                >
+                  <Ionicons
+                    name={showPassword ? 'eye-off' : 'eye'}
+                    size={20}
+                    color={dark ? COLORS.grayscale400 : COLORS.grayscale600}
+                  />
+                </TouchableOpacity>
+              </View>
+
+              <View style={styles.checkBoxContainer}>
+                <View style={styles.rememberMe}>
+                  <Checkbox
+                    style={styles.checkbox}
+                    value={isChecked}
+                    color={isChecked ? COLORS.primary : COLORS.grayscale400}
+                    onValueChange={setChecked}
+                  />
+                  <Text style={[styles.rememberText, { color: colors.text }]}>
+                    Se souvenir de moi
+                  </Text>
+                </View>
+                <TouchableOpacity onPress={() => router.push('/forgotpasswordmethods')}>
+                  <Text style={styles.forgotPasswordText}>Mot de passe oublié ?</Text>
+                </TouchableOpacity>
+              </View>
+
+              <Button
+                title={isLoading ? 'Connexion...' : 'Se connecter'}
+                filled
+                onPress={handleLogin}
+                style={styles.loginButton}
+                disabled={isLoading}
+              />
+
+              <OrSeparator text="ou continuez avec" />
+
+              <View style={styles.socialContainer}>
+                <SocialButton
+                  icon={icons.google}
+                  onPress={googleAuthHandler}
+                />
+                <SocialButton
+                  icon={icons.facebook}
+                  onPress={facebookAuthHandler}
+                />
+                <SocialButton
+                  icon={icons.appleLogo}
+                  onPress={appleAuthHandler}
+                  tintColor={dark ? COLORS.white : COLORS.black}
+                />
+              </View>
+            </View>
+          </ScrollView>
+
+          {/* Bottom */}
+          <View style={styles.bottomContainer}>
+            <Text style={[styles.bottomText, { color: dark ? COLORS.grayscale400 : COLORS.grayscale700 }]}>
+              Vous n&aposavez pas de compte ?{' '}
+            </Text>
+            <TouchableOpacity onPress={() => router.push('/signup')}>
+              <Text style={styles.signupText}>S&aposinscrire</Text>
+            </TouchableOpacity>
           </View>
-        </ScrollView>
-        <View style={styles.bottomContainer}>
-          <Text style={[styles.bottomLeft, {
-            color: dark ? COLORS.white : COLORS.black
-          }]}>Don&apos;t have an account ?</Text>
-          <TouchableOpacity
-            onPress={() => navigate("signup")}>
-            <Text style={styles.bottomRight}>{"  "}Sign Up</Text>
-          </TouchableOpacity>
-        </View>
-      </View>
+        </LinearGradient>
+      </KeyboardAvoidingView>
     </SafeAreaView>
-  )
+  );
 };
 
 const styles = StyleSheet.create({
   area: {
     flex: 1,
-    backgroundColor: COLORS.white
   },
   container: {
     flex: 1,
-    padding: 16,
-    backgroundColor: COLORS.white
+  },
+  gradientContainer: {
+    flex: 1,
+  },
+  header: {
+    paddingHorizontal: 16,
+    paddingTop: 10,
+  },
+  backButton: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  scrollView: {
+    flex: 1,
+  },
+  logoContainer: {
+    alignItems: 'center',
+    paddingHorizontal: 16,
+    marginTop: 20,
+    marginBottom: 40,
   },
   logo: {
     width: 100,
     height: 100,
-    tintColor: COLORS.primary
+    marginBottom: 20,
   },
-  logoContainer: {
-    alignItems: "center",
-    justifyContent: "center",
-    marginVertical: 32
-  },
-  title: {
+  welcomeText: {
     fontSize: 28,
-    fontFamily: "bold",
-    color: COLORS.black,
-    textAlign: "center",
-    marginBottom: 16
+    fontFamily: 'bold',
+    marginBottom: 8,
+    textAlign: 'center',
   },
-  center: {
-    flex: 1,
-    alignItems: "center",
-    justifyContent: "center",
+  subtitle: {
+    fontSize: 16,
+    fontFamily: 'regular',
+    textAlign: 'center',
+    lineHeight: 24,
+  },
+  formContainer: {
+    paddingHorizontal: 16,
+    marginBottom: 20,
+  },
+  passwordContainer: {
+    position: 'relative',
+  },
+  passwordToggle: {
+    position: 'absolute',
+    right: 16,
+    top: 20,
+    zIndex: 1,
   },
   checkBoxContainer: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "center", // <--- Add this line
-    marginVertical: 18,
-    width: "100%",
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginVertical: 20,
+  },
+  rememberMe: {
+    flexDirection: 'row',
+    alignItems: 'center',
   },
   checkbox: {
     marginRight: 8,
-    height: 16,
-    width: 16,
+    height: 20,
+    width: 20,
     borderRadius: 4,
-    borderColor: COLORS.primary,
-    borderWidth: 2,
   },
-  privacy: {
-    fontSize: 12,
-    fontFamily: "regular",
-    color: COLORS.black,
+  rememberText: {
+    fontSize: 14,
+    fontFamily: 'regular',
   },
-  socialTitle: {
-    fontSize: 19.25,
-    fontFamily: "medium",
-    color: COLORS.black,
-    textAlign: "center",
-    marginVertical: 26
+  forgotPasswordText: {
+    fontSize: 14,
+    fontFamily: 'semiBold',
+    color: COLORS.primary,
   },
-  socialBtnContainer: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "center",
+  loginButton: {
+    marginVertical: 16,
+    borderRadius: 30,
+  },
+  socialContainer: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    gap: 16,
+    marginVertical: 20,
   },
   bottomContainer: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "center",
-    marginVertical: 18,
-    position: "absolute",
-    bottom: 12,
-    right: 0,
-    left: 0,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingHorizontal: 16,
+    paddingBottom: 20,
   },
-  bottomLeft: {
+  bottomText: {
     fontSize: 14,
-    fontFamily: "regular",
-    color: "black"
+    fontFamily: 'regular',
   },
-  bottomRight: {
-    fontSize: 16,
-    fontFamily: "medium",
-    color: COLORS.primary
-  },
-  button: {
-    marginVertical: 6,
-    width: SIZES.width - 32,
-    borderRadius: 30
-  },
-  forgotPasswordBtnText: {
-    fontSize: 16,
-    fontFamily: "semiBold",
+  signupText: {
+    fontSize: 14,
+    fontFamily: 'semiBold',
     color: COLORS.primary,
-    textAlign: "center",
-    marginTop: 12
-  }
-})
+  },
+});
 
-export default Login
+export default Login;
