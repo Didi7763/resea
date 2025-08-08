@@ -287,15 +287,7 @@ const OTPVerification = () => {
               ))}
             </Animated.View>
 
-            {/* Test Info */}
-            <View style={styles.testInfoContainer}>
-              <View style={styles.testInfoBadge}>
-                <Ionicons name="information-circle" size={16} color={COLORS.primary} />
-                <Text style={styles.testInfoText}>
-                  Code de test : 1234
-                </Text>
-              </View>
-            </View>
+            {/* Test info removed */}
 
             {/* Attempts Counter */}
             {attempts > 0 && (
