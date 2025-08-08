@@ -76,6 +76,13 @@ const Login = () => {
         useNativeDriver: true,
       }),
     ]).start();
+
+    // Nettoyer les champs au montage du composant
+    dispatchFormState({
+      inputId: 'phoneNumber',
+      validationResult: undefined,
+      inputValue: '',
+    });
   }, [fadeAnimation, slideAnimation]);
 
   const inputChangedHandler = useCallback(

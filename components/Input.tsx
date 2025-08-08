@@ -57,6 +57,11 @@ const Input: FC<InputProps> = (props) => {
           placeholder={props.placeholder}
           placeholderTextColor={props.placeholderTextColor}
           autoCapitalize="none"
+          autoComplete="off"
+          autoCorrect={false}
+          spellCheck={false}
+          textContentType="none"
+          importantForAutofill="no"
         />
       </View>
       {props.errorText && (

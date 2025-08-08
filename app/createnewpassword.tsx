@@ -74,6 +74,18 @@ const CreateNewPassword = () => {
         useNativeDriver: true,
       }),
     ]).start();
+
+    // Nettoyer les champs au montage du composant
+    dispatchFormState({
+      inputId: 'password',
+      validationResult: undefined,
+      inputValue: '',
+    });
+    dispatchFormState({
+      inputId: 'confirmPassword',
+      validationResult: undefined,
+      inputValue: '',
+    });
   }, [fadeAnimation, slideAnimation]);
 
   const inputChangedHandler = useCallback(
