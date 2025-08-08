@@ -11,46 +11,46 @@ import { useNavigation } from 'expo-router';
 const baseAmount = [
     {
         id: "1",
-        amount: "$10"
+        amount: "5 000 FCFA"
     },
     {
         id: "2",
-        amount: "$20"
+        amount: "10 000 FCFA"
     },
     {
         id: "3",
-        amount: "$50"
+        amount: "20 000 FCFA"
     },
     {
         id: "4",
-        amount: "$100"
+        amount: "50 000 FCFA"
     },
     {
         id: "5",
-        amount: "$200"
+        amount: "100 000 FCFA"
     },
     {
         id: "6",
-        amount: "$250"
+        amount: "150 000 FCFA"
     },
     {
         id: "7",
-        amount: "$500"
+        amount: "200 000 FCFA"
     },
     {
         id: "8",
-        amount: "$750"
+        amount: "300 000 FCFA"
     },
     {
         id: "9",
-        amount: "$1000"
+        amount: "500 000 FCFA"
     }
 ]
 
 // Topup amount screen
 const TopupAmount = () => {
     const navigation = useNavigation<NavigationProp<any>>();
-    const [selectedAmount, setSelectedAmount] = useState("$120");
+    const [selectedAmount, setSelectedAmount] = useState("120 000 FCFA");
     const { colors, dark } = useTheme();
 
     const handleAmountSelection = (amount: any) => {
@@ -66,7 +66,7 @@ const TopupAmount = () => {
                         color: dark ? COLORS.white : COLORS.greyscale900
                     }]}>Enter the amount of top up</Text>
                     <TextInput
-                        placeholder='$120'
+                        placeholder='120 000 FCFA'
                         placeholderTextColor={COLORS.primary}
                         style={[styles.input, {
                             color: COLORS.primary,

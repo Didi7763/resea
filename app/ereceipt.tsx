@@ -9,6 +9,7 @@ import * as Clipboard from 'expo-clipboard';
 import { useTheme } from '../theme/ThemeProvider';
 import { NavigationProp } from '@react-navigation/native';
 import { useNavigation } from 'expo-router';
+import { formatCFA } from '@/utils/currency';
 
 
 const EReceipt = () => {
@@ -165,13 +166,13 @@ const EReceipt = () => {
             <Text style={styles.viewLeft}>Amount (2 days)</Text>
             <Text style={[styles.viewRight, {
               color: dark ? COLORS.white : COLORS.black
-            }]}>$600</Text>
+            }]}>{formatCFA(600000)}</Text>
           </View>
           <View style={styles.viewContainer}>
             <Text style={styles.viewLeft}>Tax</Text>
             <Text style={[styles.viewRight, {
               color: dark ? COLORS.white : COLORS.black
-            }]}>$5.55</Text>
+            }]}>{formatCFA(3500)}</Text>
           </View>
           <View style={styles.viewContainer}>
             <Text style={styles.viewLeft}>Country</Text>
@@ -188,7 +189,7 @@ const EReceipt = () => {
             <Text style={styles.viewLeft}>Total</Text>
             <Text style={[styles.viewRight, {
               color: dark ? COLORS.white : COLORS.black
-            }]}>$605.55</Text>
+            }]}>{formatCFA(603500)}</Text>
           </View>
           <View style={styles.viewContainer}>
             <Text style={styles.viewLeft}>Payment Methods</Text>

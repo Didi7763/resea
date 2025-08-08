@@ -8,6 +8,7 @@ import Button from '../components/Button';
 import { useTheme } from '../theme/ThemeProvider';
 import { NavigationProp } from '@react-navigation/native';
 import { useNavigation } from 'expo-router';
+import { formatCFA } from '@/utils/currency';
 
 const ReviewSummary = () => {
     const navigation = useNavigation<NavigationProp<any>>();
@@ -126,18 +127,18 @@ const ReviewSummary = () => {
                     }]}>
                         <View style={styles.view}>
                             <Text style={styles.viewLeft}>Amount (2 days)</Text>
-                            <Text style={[styles.viewRight, { color: dark ? COLORS.white : COLORS.greyscale900 }]}>$600</Text>
+                            <Text style={[styles.viewRight, { color: dark ? COLORS.white : COLORS.greyscale900 }]}>{formatCFA(600000)}</Text>
                         </View>
                         <View style={styles.view}>
                             <Text style={styles.viewLeft}>Tax</Text>
-                            <Text style={[styles.viewRight, { color: dark ? COLORS.white : COLORS.greyscale900 }]}>$5.55</Text>
+                            <Text style={[styles.viewRight, { color: dark ? COLORS.white : COLORS.greyscale900 }]}>{formatCFA(3500)}</Text>
                         </View>
                         <View style={[styles.separateLine, {
                             backgroundColor: dark ? COLORS.greyScale800 : COLORS.grayscale200
                         }]} />
                         <View style={styles.view}>
                             <Text style={styles.viewLeft}>Total</Text>
-                            <Text style={[styles.viewRight, { color: dark ? COLORS.white : COLORS.greyscale900 }]}>$605.55</Text>
+                            <Text style={[styles.viewRight, { color: dark ? COLORS.white : COLORS.greyscale900 }]}>{formatCFA(603500)}</Text>
                         </View>
                     </View>
 

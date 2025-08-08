@@ -3,6 +3,7 @@ import React, { useState } from 'react';
 import { COLORS, SIZES, icons } from '../constants';
 import { FontAwesome } from '@expo/vector-icons';
 import { useTheme } from '../theme/ThemeProvider';
+import { formatCFA } from '../utils/currency';
 
 interface VerticalEstateCardProps {
   name: string;
@@ -59,14 +60,14 @@ const VerticalEstateCard: React.FC<VerticalEstateCardProps> = ({
       </Text>
       <View style={styles.bottomPriceContainer}>
         <View style={styles.priceContainer}>
-          <Text style={styles.price}>${price}</Text>
+          <Text style={styles.price}>{formatCFA(price)}</Text>
           <Text
             style={[
               styles.durationText,
               { color: dark ? COLORS.greyscale300 : COLORS.grayscale700 }
             ]}
           >
-            / night
+            / nuit
           </Text>
         </View>
         <TouchableOpacity onPress={() => setIsFavourite(!isFavourite)}>

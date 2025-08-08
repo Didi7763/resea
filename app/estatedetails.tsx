@@ -17,6 +17,7 @@ import AutoSlider from '@/components/AutoSlider';
 import SocialIcon from '@/components/SocialIcon';
 import { NavigationProp } from '@react-navigation/native';
 import { useNavigation } from 'expo-router';
+import { formatCFA } from '@/utils/currency';
 
 const EstateDetails = () => {
     const navigation = useNavigation<NavigationProp<any>>();
@@ -345,7 +346,7 @@ const EstateDetails = () => {
                         color: dark ? COLORS.grayscale400 : COLORS.grayscale700,
                     }]}>Price</Text>
                     <View style={styles.priceDurationContainer}>
-                        <Text style={styles.price}>$29{" "}</Text>
+                        <Text style={styles.price}>{formatCFA(29000)}{" "}</Text>
                         <Text style={[styles.priceDuration, {
                             color: dark ? COLORS.grayscale400 : COLORS.grayscale700,
                         }]}>/ night</Text>

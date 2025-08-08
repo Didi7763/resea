@@ -19,6 +19,7 @@
     "web": {
       "favicon": "./assets/images/favicon.png"
     },
+    "scheme": "reasa",
     "experiments": {
       "typedRoutes": true
     },
