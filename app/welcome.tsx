@@ -49,7 +49,7 @@ const Welcome = () => {
         useNativeDriver: true,
       }),
     ]).start();
-  }, []);
+  }, [fadeAnimation, slideAnimation, scaleAnimation]);
 
   const handleSocialLogin = (provider: string) => {
     console.log(`${provider} Authentication`);
@@ -210,10 +210,10 @@ const Welcome = () => {
           ]}
         >
           <Text style={[styles.bottomText, { color: dark ? COLORS.grayscale400 : COLORS.grayscale700 }]}>
-            Vous n&aposavez pas de compte ?{' '}
+            Vous n&apos;avez pas de compte ?{' '}
           </Text>
           <TouchableOpacity onPress={handleSignup}>
-            <Text style={styles.signupText}>S&aposinscrire</Text>
+            <Text style={styles.signupText}>S&apos;inscrire</Text>
           </TouchableOpacity>
         </Animated.View>
 

@@ -16,7 +16,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 
-import { COLORS, SIZES, icons, images } from '../constants';
+import { COLORS } from '../constants';
 import { useTheme } from '../theme/ThemeProvider';
 import Button from '../components/Button';
 
@@ -39,11 +39,11 @@ const OTPVerification = () => {
   const fadeAnimation = useRef(new Animated.Value(0)).current;
 
   // Refs for inputs
-  const inputRefs = useRef<TextInput[]>([]);
+  const inputRefs = useRef<(TextInput | null)[]>([]);
 
   // Get phone number from params or default
-  const phoneNumber = params.phone as string || '+225 XX XX XXX 99';
-  const source = params.source as string || 'signup'; // 'signup' ou 'forgot'
+  const phoneNumber = (params.phone as string) || '+225 XX XX XXX 99';
+  const source = (params.source as string) || 'signup'; // 'signup' ou 'forgot'
 
   useEffect(() => {
     // Start fade in animation
@@ -57,7 +57,7 @@ const OTPVerification = () => {
     setTimeout(() => {
       inputRefs.current[0]?.focus();
     }, 300);
-  }, []);
+  }, [fadeAnimation]);
 
   useEffect(() => {
     // Timer for resend
@@ -182,37 +182,21 @@ const OTPVerification = () => {
           }
         }
       }, 2000);
-    } catch (error) {
+    } catch {
       setIsLoading(false);
       Alert.alert('Erreur', 'Une erreur est survenue. Veuillez réessayer.');
     }
   };
 
-  const handleResend = async () => {
+  const handleResend = () => {
     if (!canResend) return;
-
-    setCanResend(false);
+    
     setResendTimer(60);
+    setCanResend(false);
     setAttempts(0);
     setOtp(['', '', '', '']);
-    
-    try {
-      // Simulation d'envoi
-      setTimeout(() => {
-        Alert.alert('Code envoyé', 'Un nouveau code a été envoyé à votre numéro');
-        inputRefs.current[0]?.focus();
-      }, 1000);
-    } catch (error) {
-      Alert.alert('Erreur', 'Impossible d\'envoyer le code');
-      setCanResend(true);
-      setResendTimer(0);
-    }
-  };
-
-  const formatTimer = (seconds: number) => {
-    const mins = Math.floor(seconds / 60);
-    const secs = seconds % 60;
-    return `${mins}:${secs.toString().padStart(2, '0')}`;
+    inputRefs.current[0]?.focus();
+    Alert.alert('Code renvoyé', 'Un nouveau code de vérification a été envoyé');
   };
 
   return (
@@ -222,7 +206,7 @@ const OTPVerification = () => {
           dark ? COLORS.dark1 : COLORS.white,
           dark ? COLORS.dark2 : COLORS.tertiaryWhite,
         ]}
-        style={styles.container}
+        style={styles.gradientContainer}
       >
         {/* Header */}
         <View style={styles.header}>
@@ -239,18 +223,15 @@ const OTPVerification = () => {
           <View style={styles.headerSpacer} />
         </View>
 
-        <ScrollView
-          showsVerticalScrollIndicator={false}
-          contentContainerStyle={styles.scrollContainer}
-        >
+        <ScrollView contentContainerStyle={styles.scrollContent}>
           <Animated.View
             style={[
               styles.content,
               { opacity: fadeAnimation }
             ]}
           >
-            {/* Illustration */}
-            <View style={styles.illustrationContainer}>
+            {/* Icon Container */}
+            <View style={styles.iconContainer}>
               <View style={[styles.phoneIcon, { backgroundColor: dark ? COLORS.dark3 : COLORS.grayscale100 }]}>
                 <Ionicons name="phone-portrait" size={48} color={COLORS.primary} />
               </View>
@@ -327,22 +308,19 @@ const OTPVerification = () => {
 
             {/* Verify Button */}
             <Button
-              title={isLoading ? 'Vérification...' : 'Vérifier'}
+              title={isLoading ? 'Vérification...' : 'Vérifier le code'}
               filled
               onPress={() => handleVerify()}
-              style={[
-                styles.verifyButton,
-                { opacity: otp.every(digit => digit !== '') ? 1 : 0.5 }
-              ]}
-              disabled={isLoading || !otp.every(digit => digit !== '')}
+              style={styles.verifyButton}
+              disabled={isLoading || otp.some(digit => !digit)}
             />
 
             {/* Resend Section */}
             <View style={styles.resendContainer}>
               <Text style={[styles.resendText, { color: dark ? COLORS.grayscale400 : COLORS.grayscale700 }]}>
-                Vous n&aposavez pas reçu le code ?
+                Vous n&apos;avez pas reçu le code ?
               </Text>
-              <TouchableOpacity
+              <TouchableOpacity 
                 onPress={handleResend}
                 disabled={!canResend}
                 style={styles.resendButton}
@@ -351,20 +329,22 @@ const OTPVerification = () => {
                   styles.resendButtonText,
                   { color: canResend ? COLORS.primary : COLORS.grayscale400 }
                 ]}>
-                  {canResend ? 'Renvoyer le code' : `Renvoyer dans ${formatTimer(resendTimer)}`}
+                  {canResend ? 'Renvoyer le code' : `Renvoyer dans ${resendTimer}s`}
                 </Text>
               </TouchableOpacity>
             </View>
 
             {/* Change Number */}
-            <TouchableOpacity
-              onPress={() => router.back()}
-              style={styles.changeNumberButton}
-            >
-              <Text style={[styles.changeNumberText, { color: COLORS.primary }]}>
-                Changer de numéro
-              </Text>
-            </TouchableOpacity>
+            <View style={styles.changeNumberContainer}>
+              <TouchableOpacity 
+                onPress={() => router.back()}
+                style={styles.changeNumberButton}
+              >
+                <Text style={[styles.changeNumberText, { color: COLORS.primary }]}>
+                  Changer de numéro
+                </Text>
+              </TouchableOpacity>
+            </View>
           </Animated.View>
         </ScrollView>
       </LinearGradient>
@@ -376,7 +356,7 @@ const styles = StyleSheet.create({
   area: {
     flex: 1,
   },
-  container: {
+  gradientContainer: {
     flex: 1,
   },
   header: {
@@ -385,7 +365,7 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     paddingHorizontal: 16,
     paddingTop: 10,
-    paddingBottom: 20,
+    paddingBottom: 16,
   },
   backButton: {
     width: 40,
@@ -401,18 +381,20 @@ const styles = StyleSheet.create({
   headerSpacer: {
     width: 40,
   },
-  scrollContainer: {
+  scrollContent: {
     flexGrow: 1,
+    justifyContent: 'center',
+    paddingHorizontal: 16,
   },
   content: {
-    flex: 1,
-    paddingHorizontal: 16,
     alignItems: 'center',
-    justifyContent: 'center',
+    paddingVertical: 20,
   },
-  illustrationContainer: {
+  iconContainer: {
     position: 'relative',
     marginBottom: 40,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   phoneIcon: {
     width: 120,
@@ -519,6 +501,9 @@ const styles = StyleSheet.create({
   resendButtonText: {
     fontSize: 16,
     fontFamily: 'semiBold',
+  },
+  changeNumberContainer: {
+    alignItems: 'center',
   },
   changeNumberButton: {
     paddingVertical: 12,

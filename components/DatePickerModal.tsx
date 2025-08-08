@@ -3,9 +3,11 @@ import { Modal, View, Text, TouchableOpacity, StyleSheet } from 'react-native';
 import DatePicker from 'react-native-modern-datepicker';
 import { COLORS } from '../constants';
 
+// Supprimer les erreurs de console pour defaultProps
 const error = console.error;
 console.error = (...args) => {
   if (/defaultProps/.test(args[0])) return;
+  if (/width.*not supported by native animated module/.test(args[0])) return;
   error(...args);
 };
 
@@ -34,21 +36,20 @@ const DatePickerModal: FC<DatePickerModalProps> = ({
   const handleOnPressStartDate = () => {
     onClose();
   };
-
-  const modalVisible = open;
-
+  
   return (
-    <Modal animationType="slide" transparent={true} visible={modalVisible}>
+    <Modal animationType="slide" transparent={true} visible={open}>
       <View style={styles.centeredView}>
         <View style={styles.modalView}>
           <DatePicker
-            mode="datepicker"
-            locale="en"  // This sets the language to English
+            mode="calendar"
+            locale="en"
             isGregorian={true}
             minimumDate={startDate}
             selected={selectedStartDate}
             onDateChange={handleDateChange}
             onSelectedChange={(date) => setSelectedStartDate(date)}
+            style={styles.datePicker}
             options={{
               backgroundColor: COLORS.primary,
               textHeaderColor: COLORS.white,
@@ -56,11 +57,14 @@ const DatePickerModal: FC<DatePickerModalProps> = ({
               selectedTextColor: COLORS.primary,
               mainColor: COLORS.white,
               textSecondaryColor: '#FFFFFF',
-              borderColor: COLORS.primary,
+              borderColor: 'rgba(122, 146, 165, 0.1)',
             }}
           />
-          <TouchableOpacity onPress={handleOnPressStartDate}>
-            <Text style={{ color: 'white' }}>Close</Text>
+          <TouchableOpacity 
+            style={styles.closeButton}
+            onPress={handleOnPressStartDate}
+          >
+            <Text style={styles.closeButtonText}>Fermer</Text>
           </TouchableOpacity>
         </View>
       </View>
@@ -73,6 +77,7 @@ const styles = StyleSheet.create({
     flex: 1,
     alignItems: 'center',
     justifyContent: 'center',
+    backgroundColor: 'rgba(0,0,0,0.5)',
   },
   modalView: {
     margin: 20,
@@ -80,8 +85,9 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     borderRadius: 20,
-    padding: 35,
+    padding: 20,
     width: '90%',
+    maxWidth: 400,
     shadowColor: '#000',
     shadowOffset: {
       width: 0,
@@ -90,6 +96,23 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.25,
     shadowRadius: 4,
     elevation: 5,
+  },
+  datePicker: {
+    // Pas de width animée ici pour éviter l'erreur
+    borderRadius: 10,
+  },
+  closeButton: {
+    backgroundColor: COLORS.white,
+    paddingVertical: 12,
+    paddingHorizontal: 30,
+    borderRadius: 25,
+    marginTop: 20,
+  },
+  closeButtonText: {
+    color: COLORS.primary,
+    fontSize: 16,
+    fontWeight: '600',
+    textAlign: 'center',
   },
 });
 

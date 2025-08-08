@@ -75,6 +75,7 @@ const RootLayout: FC = () => {
         <Stack.Screen name="topupconfirmpin" />
         <Stack.Screen name="topupereceipt" />
         <Stack.Screen name="topupmethods" />
+        <Stack.Screen name="propertiesmanagement" />
         <Stack.Screen name="+not-found" />
       </Stack>
     </ThemeProvider>

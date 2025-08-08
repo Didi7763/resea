@@ -1,4 +1,4 @@
-import React, { useState, useCallback, useReducer, useEffect } from 'react';
+import React, { useState, useCallback, useReducer, useEffect, useRef } from 'react';
 import {
   View,
   Text,
@@ -8,46 +8,39 @@ import {
   Alert,
   KeyboardAvoidingView,
   Platform,
-  Dimensions
+  Animated,
+  TextInput
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { ScrollView } from 'react-native-virtualized-view';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
-import Checkbox from 'expo-checkbox';
+import { Checkbox } from 'expo-checkbox';
 import { useRouter } from 'expo-router';
 
-import { COLORS, SIZES, icons, images } from '../constants';
+import { COLORS, icons, illustrations } from '../constants';
 import { useTheme } from '../theme/ThemeProvider';
 import Button from '../components/Button';
 import Input from '../components/Input';
-import SocialButton from '../components/SocialButton';
-import OrSeparator from '../components/OrSeparator';
 import { validateInput } from '../utils/actions/formActions';
 import { reducer } from '../utils/reducers/formReducers';
 
-const { width, height } = Dimensions.get('window');
-
 interface FormState {
   inputValues: {
-    email: string;
-    password: string;
+    phoneNumber: string;
   };
   inputValidities: {
-    email: boolean | undefined;
-    password: boolean | undefined;
+    phoneNumber: string | undefined;
   };
   formIsValid: boolean;
 }
 
 const initialState: FormState = {
   inputValues: {
-    email: '',
-    password: '',
+    phoneNumber: '',
   },
   inputValidities: {
-    email: false,
-    password: false,
+    phoneNumber: undefined, // undefined = pas encore validé, string = erreur
   },
   formIsValid: false,
 };
@@ -56,10 +49,34 @@ const Login = () => {
   const router = useRouter();
   const { colors, dark } = useTheme();
   const [formState, dispatchFormState] = useReducer(reducer, initialState);
-  const [error, setError] = useState<string | null>(null);
   const [isChecked, setChecked] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
-  const [showPassword, setShowPassword] = useState(false);
+  const [showPinInput, setShowPinInput] = useState(false);
+  const [pin, setPin] = useState(['', '', '', '']);
+  const [attempts, setAttempts] = useState(0);
+  const maxAttempts = 3;
+  const inputRefs = useRef<(TextInput | null)[]>([]);
+
+  // Animations
+  const fadeAnimation = useRef(new Animated.Value(0)).current;
+  const slideAnimation = useRef(new Animated.Value(50)).current;
+  const shakeAnimation = useRef(new Animated.Value(0)).current;
+
+  useEffect(() => {
+    // Start entrance animations
+    Animated.parallel([
+      Animated.timing(fadeAnimation, {
+        toValue: 1,
+        duration: 800,
+        useNativeDriver: true,
+      }),
+      Animated.timing(slideAnimation, {
+        toValue: 0,
+        duration: 600,
+        useNativeDriver: true,
+      }),
+    ]).start();
+  }, [fadeAnimation, slideAnimation]);
 
   const inputChangedHandler = useCallback(
     (inputId: string, inputValue: string) => {
@@ -73,39 +90,140 @@ const Login = () => {
     [dispatchFormState]
   );
 
-  useEffect(() => {
-    if (error) {
-      Alert.alert('Erreur de connexion', error);
+  const handlePhoneSubmit = async () => {
+    if (!formState.formIsValid) {
+      Alert.alert('Erreur', 'Veuillez saisir un numéro de téléphone valide');
+      return;
     }
-  }, [error]);
 
-  const handleLogin = async () => {
     setIsLoading(true);
+
     try {
-      // Simulation d'une connexion réussie
+      // Simulation de vérification du numéro
       setTimeout(() => {
         setIsLoading(false);
-        router.replace('/(tabs)');
-      }, 2000);
-    } catch (err) {
+        setShowPinInput(true);
+        setTimeout(() => {
+          inputRefs.current[0]?.focus();
+        }, 100);
+      }, 1500);
+    } catch {
       setIsLoading(false);
-      setError('Email ou mot de passe incorrect');
+      Alert.alert('Erreur', 'Impossible de vérifier le numéro. Veuillez réessayer.');
     }
   };
 
-  const appleAuthHandler = () => {
-    console.log('Apple Authentication');
-    router.replace('/(tabs)');
+  const handlePinChange = (value: string, index: number) => {
+    const cleanValue = value.replace(/[^0-9]/g, '');
+    
+    if (cleanValue.length <= 1) {
+      const newPin = [...pin];
+      newPin[index] = cleanValue;
+      setPin(newPin);
+
+      // Auto-focus next input
+      if (cleanValue && index < 3) {
+        inputRefs.current[index + 1]?.focus();
+      }
+
+      // Auto verify when all digits entered
+      if (index === 3 && cleanValue) {
+        const completePin = [...newPin];
+        completePin[3] = cleanValue;
+        if (completePin.every(digit => digit !== '')) {
+          setTimeout(() => handlePinVerify(completePin.join('')), 300);
+        }
+      }
+    }
   };
 
-  const facebookAuthHandler = () => {
-    console.log('Facebook Authentication');
-    router.replace('/(tabs)');
+  const handleKeyPress = (e: any, index: number) => {
+    if (e.nativeEvent.key === 'Backspace' && !pin[index] && index > 0) {
+      inputRefs.current[index - 1]?.focus();
+    }
   };
 
-  const googleAuthHandler = () => {
-    console.log('Google Authentication');
-    router.replace('/(tabs)');
+  const shakeInputs = () => {
+    Animated.sequence([
+      Animated.timing(shakeAnimation, {
+        toValue: 10,
+        duration: 100,
+        useNativeDriver: true,
+      }),
+      Animated.timing(shakeAnimation, {
+        toValue: -10,
+        duration: 100,
+        useNativeDriver: true,
+      }),
+      Animated.timing(shakeAnimation, {
+        toValue: 10,
+        duration: 100,
+        useNativeDriver: true,
+      }),
+      Animated.timing(shakeAnimation, {
+        toValue: 0,
+        duration: 100,
+        useNativeDriver: true,
+      }),
+    ]).start();
+  };
+
+  const handlePinVerify = async (pinCode?: string) => {
+    const codeToVerify = pinCode || pin.join('');
+    
+    if (codeToVerify.length !== 4) {
+      Alert.alert('PIN incomplet', 'Veuillez saisir votre code PIN à 4 chiffres');
+      return;
+    }
+
+    setIsLoading(true);
+
+    try {
+      // Simulation de vérification PIN
+      setTimeout(() => {
+        // PIN de test : 1234 pour réussir
+        if (codeToVerify === '1234') {
+          setIsLoading(false);
+          Alert.alert(
+            'Connexion réussie',
+            'Bienvenue dans REASA !',
+            [{
+              text: 'Continuer',
+              onPress: () => router.replace('/(tabs)')
+            }]
+          );
+        } else {
+          setIsLoading(false);
+          setAttempts(prev => prev + 1);
+          
+          if (attempts + 1 >= maxAttempts) {
+            Alert.alert(
+              'Trop de tentatives',
+              'Compte temporairement bloqué. Veuillez réessayer plus tard.',
+              [{
+                text: 'OK',
+                onPress: () => {
+                  setShowPinInput(false);
+                  setPin(['', '', '', '']);
+                  setAttempts(0);
+                }
+              }]
+            );
+          } else {
+            shakeInputs();
+            setPin(['', '', '', '']);
+            inputRefs.current[0]?.focus();
+            Alert.alert(
+              'PIN incorrect',
+              `PIN incorrect. Il vous reste ${maxAttempts - attempts - 1} tentative(s).`
+            );
+          }
+        }
+      }, 1500);
+    } catch {
+      setIsLoading(false);
+      Alert.alert('Erreur', 'Une erreur est survenue. Veuillez réessayer.');
+    }
   };
 
   return (
@@ -130,109 +248,186 @@ const Login = () => {
                 color={dark ? COLORS.white : COLORS.black}
               />
             </TouchableOpacity>
+            <Text style={[styles.headerTitle, { color: colors.text }]}>
+              Connexion
+            </Text>
+            <View style={styles.headerSpacer} />
           </View>
 
           <ScrollView showsVerticalScrollIndicator={false} style={styles.scrollView}>
-            {/* Logo */}
-            <View style={styles.logoContainer}>
-              <Image source={images.logo} resizeMode="contain" style={styles.logo} />
-              <Text style={[styles.welcomeText, { color: colors.text }]}>
-                Bon retour !
-              </Text>
-              <Text style={[styles.subtitle, { color: dark ? COLORS.grayscale400 : COLORS.grayscale700 }]}>
-                Connectez-vous à votre compte REASA
-              </Text>
-            </View>
-
-            {/* Form */}
-            <View style={styles.formContainer}>
-              <Input
-                id="email"
-                onInputChanged={inputChangedHandler}
-                errorText={formState.inputValidities['email']}
-                placeholder="Email ou numéro de téléphone"
-                placeholderTextColor={dark ? COLORS.grayTie : COLORS.grayscale600}
-                icon={icons.email}
-                keyboardType="email-address"
-              />
-              
-              <View style={styles.passwordContainer}>
-                <Input
-                  id="password"
-                  onInputChanged={inputChangedHandler}
-                  errorText={formState.inputValidities['password']}
-                  autoCapitalize="none"
-                  placeholder="Mot de passe"
-                  placeholderTextColor={dark ? COLORS.grayTie : COLORS.grayscale600}
-                  icon={icons.padlock}
-                  secureTextEntry={!showPassword}
+            <Animated.View
+              style={[
+                styles.content,
+                { 
+                  opacity: fadeAnimation,
+                  transform: [{ translateY: slideAnimation }]
+                }
+              ]}
+            >
+              {/* Illustration */}
+              <View style={styles.illustrationContainer}>
+                <Image
+                  source={dark ? illustrations.welcomeDark : illustrations.welcome}
+                  resizeMode="contain"
+                  style={styles.illustration}
                 />
-                <TouchableOpacity
-                  style={styles.passwordToggle}
-                  onPress={() => setShowPassword(!showPassword)}
-                >
-                  <Ionicons
-                    name={showPassword ? 'eye-off' : 'eye'}
-                    size={20}
-                    color={dark ? COLORS.grayscale400 : COLORS.grayscale600}
-                  />
-                </TouchableOpacity>
               </View>
 
-              <View style={styles.checkBoxContainer}>
-                <View style={styles.rememberMe}>
-                  <Checkbox
-                    style={styles.checkbox}
-                    value={isChecked}
-                    color={isChecked ? COLORS.primary : COLORS.grayscale400}
-                    onValueChange={setChecked}
+              {!showPinInput ? (
+                // Phase 1: Numéro de téléphone
+                <View style={styles.formContainer}>
+                  <View style={styles.titleContainer}>
+                    <Text style={[styles.title, { color: colors.text }]}>
+                      Connectez-vous à REASA
+                    </Text>
+                    <Text style={[styles.subtitle, { color: dark ? COLORS.grayscale400 : COLORS.grayscale700 }]}>
+                      Saisissez votre numéro de téléphone pour continuer
+                    </Text>
+                  </View>
+
+                  <View style={styles.inputContainer}>
+                    <Input
+                      id="phoneNumber"
+                      onInputChanged={inputChangedHandler}
+                      errorText={formState.inputValidities.phoneNumber ? [formState.inputValidities.phoneNumber] : undefined}
+                      placeholder="Numéro de téléphone"
+                      placeholderTextColor={dark ? COLORS.grayTie : COLORS.grayscale600}
+                      icon={icons.call}
+                      keyboardType="phone-pad"
+                    />
+                  </View>
+
+                  <View style={styles.rememberContainer}>
+                    <Checkbox
+                      style={styles.checkbox}
+                      value={isChecked}
+                      onValueChange={setChecked}
+                      color={isChecked ? COLORS.primary : undefined}
+                    />
+                    <Text style={[styles.rememberText, { color: dark ? COLORS.white : COLORS.black }]}>
+                      Se souvenir de moi
+                    </Text>
+                  </View>
+
+                  <Button
+                    title={isLoading ? 'Vérification...' : 'Continuer'}
+                    filled
+                    onPress={handlePhoneSubmit}
+                    style={styles.continueButton}
+                    disabled={isLoading || !formState.formIsValid}
                   />
-                  <Text style={[styles.rememberText, { color: colors.text }]}>
-                    Se souvenir de moi
-                  </Text>
+
+                  <View style={styles.signupContainer}>
+                    <Text style={[styles.noAccountText, { color: dark ? COLORS.grayscale400 : COLORS.grayscale700 }]}>
+                      Vous n&apos;avez pas de compte ?{' '}
+                    </Text>
+                    <TouchableOpacity onPress={() => router.push('/signup')}>
+                      <Text style={styles.signupText}>S&apos;inscrire</Text>
+                    </TouchableOpacity>
+                  </View>
+
+                  <TouchableOpacity 
+                    style={styles.forgotContainer}
+                    onPress={() => router.push('/forgotpasswordmethods')}
+                  >
+                    <Text style={styles.forgotText}>
+                      Code PIN oublié ?
+                    </Text>
+                  </TouchableOpacity>
                 </View>
-                <TouchableOpacity onPress={() => router.push('/forgotpasswordmethods')}>
-                  <Text style={styles.forgotPasswordText}>Mot de passe oublié ?</Text>
-                </TouchableOpacity>
-              </View>
+              ) : (
+                // Phase 2: Code PIN
+                <View style={styles.formContainer}>
+                  <View style={styles.titleContainer}>
+                    <Text style={[styles.title, { color: colors.text }]}>
+                      Saisissez votre code PIN
+                    </Text>
+                    <Text style={[styles.subtitle, { color: dark ? COLORS.grayscale400 : COLORS.grayscale700 }]}>
+                      Entrez le code PIN à 4 chiffres pour{'\n'}
+                      {formState.inputValues.phoneNumber}
+                    </Text>
+                  </View>
 
-              <Button
-                title={isLoading ? 'Connexion...' : 'Se connecter'}
-                filled
-                onPress={handleLogin}
-                style={styles.loginButton}
-                disabled={isLoading}
-              />
+                  {/* PIN Input */}
+                  <Animated.View
+                    style={[
+                      styles.pinContainer,
+                      { transform: [{ translateX: shakeAnimation }] }
+                    ]}
+                  >
+                    {pin.map((digit, index) => (
+                      <TextInput
+                        key={index}
+                        ref={(ref) => {
+                          if (ref) inputRefs.current[index] = ref;
+                        }}
+                        style={[
+                          styles.pinInput,
+                          {
+                            backgroundColor: dark ? COLORS.dark3 : COLORS.white,
+                            borderColor: digit 
+                              ? COLORS.primary 
+                              : dark ? COLORS.dark3 : COLORS.grayscale200,
+                            color: colors.text,
+                          }
+                        ]}
+                        value={digit}
+                        onChangeText={(text) => handlePinChange(text, index)}
+                        onKeyPress={(e) => handleKeyPress(e, index)}
+                        keyboardType="number-pad"
+                        maxLength={1}
+                        secureTextEntry
+                        selectTextOnFocus
+                        textContentType="oneTimeCode"
+                      />
+                    ))}
+                  </Animated.View>
 
-              <OrSeparator text="ou continuez avec" />
+                  {/* Test Info */}
+                  <View style={styles.testInfoContainer}>
+                    <View style={styles.testInfoBadge}>
+                      <Ionicons name="information-circle" size={16} color={COLORS.primary} />
+                      <Text style={styles.testInfoText}>
+                        Code PIN de test : 1234
+                      </Text>
+                    </View>
+                  </View>
 
-              <View style={styles.socialContainer}>
-                <SocialButton
-                  icon={icons.google}
-                  onPress={googleAuthHandler}
-                />
-                <SocialButton
-                  icon={icons.facebook}
-                  onPress={facebookAuthHandler}
-                />
-                <SocialButton
-                  icon={icons.appleLogo}
-                  onPress={appleAuthHandler}
-                  tintColor={dark ? COLORS.white : COLORS.black}
-                />
-              </View>
-            </View>
+                  {/* Attempts Counter */}
+                  {attempts > 0 && (
+                    <View style={styles.attemptsContainer}>
+                      <Text style={[styles.attemptsText, { color: COLORS.red }]}>
+                        Tentatives restantes : {maxAttempts - attempts}
+                      </Text>
+                    </View>
+                  )}
+
+                  <Button
+                    title={isLoading ? 'Vérification...' : 'Se connecter'}
+                    filled
+                    onPress={() => handlePinVerify()}
+                    style={styles.verifyButton}
+                    disabled={isLoading || pin.some(digit => !digit)}
+                  />
+
+                  <View style={styles.backToPhoneContainer}>
+                    <TouchableOpacity 
+                      onPress={() => {
+                        setShowPinInput(false);
+                        setPin(['', '', '', '']);
+                        setAttempts(0);
+                      }}
+                      style={styles.backToPhoneButton}
+                    >
+                      <Text style={[styles.backToPhoneText, { color: COLORS.primary }]}>
+                        Changer de numéro
+                      </Text>
+                    </TouchableOpacity>
+                  </View>
+                </View>
+              )}
+            </Animated.View>
           </ScrollView>
-
-          {/* Bottom */}
-          <View style={styles.bottomContainer}>
-            <Text style={[styles.bottomText, { color: dark ? COLORS.grayscale400 : COLORS.grayscale700 }]}>
-              Vous n&aposavez pas de compte ?{' '}
-            </Text>
-            <TouchableOpacity onPress={() => router.push('/signup')}>
-              <Text style={styles.signupText}>S&aposinscrire</Text>
-            </TouchableOpacity>
-          </View>
         </LinearGradient>
       </KeyboardAvoidingView>
     </SafeAreaView>
@@ -250,8 +445,12 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   header: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
     paddingHorizontal: 16,
     paddingTop: 10,
+    paddingBottom: 16,
   },
   backButton: {
     width: 40,
@@ -260,25 +459,40 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
+  headerTitle: {
+    fontSize: 18,
+    fontFamily: 'semiBold',
+  },
+  headerSpacer: {
+    width: 40,
+  },
   scrollView: {
     flex: 1,
   },
-  logoContainer: {
-    alignItems: 'center',
+  content: {
+    flex: 1,
     paddingHorizontal: 16,
-    marginTop: 20,
-    marginBottom: 40,
   },
-  logo: {
-    width: 100,
-    height: 100,
-    marginBottom: 20,
+  illustrationContainer: {
+    alignItems: 'center',
+    marginVertical: 20,
   },
-  welcomeText: {
+  illustration: {
+    width: 200,
+    height: 150,
+  },
+  formContainer: {
+    flex: 1,
+  },
+  titleContainer: {
+    alignItems: 'center',
+    marginBottom: 32,
+  },
+  title: {
     fontSize: 28,
     fontFamily: 'bold',
-    marginBottom: 8,
     textAlign: 'center',
+    marginBottom: 12,
   },
   subtitle: {
     fontSize: 16,
@@ -286,62 +500,32 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     lineHeight: 24,
   },
-  formContainer: {
-    paddingHorizontal: 16,
+  inputContainer: {
     marginBottom: 20,
   },
-  passwordContainer: {
-    position: 'relative',
-  },
-  passwordToggle: {
-    position: 'absolute',
-    right: 16,
-    top: 20,
-    zIndex: 1,
-  },
-  checkBoxContainer: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginVertical: 20,
-  },
-  rememberMe: {
+  rememberContainer: {
     flexDirection: 'row',
     alignItems: 'center',
+    marginBottom: 32,
   },
   checkbox: {
-    marginRight: 8,
-    height: 20,
-    width: 20,
-    borderRadius: 4,
+    marginRight: 12,
   },
   rememberText: {
     fontSize: 14,
-    fontFamily: 'regular',
+    fontFamily: 'medium',
   },
-  forgotPasswordText: {
-    fontSize: 14,
-    fontFamily: 'semiBold',
-    color: COLORS.primary,
-  },
-  loginButton: {
-    marginVertical: 16,
+  continueButton: {
     borderRadius: 30,
+    marginBottom: 32,
   },
-  socialContainer: {
-    flexDirection: 'row',
-    justifyContent: 'center',
-    gap: 16,
-    marginVertical: 20,
-  },
-  bottomContainer: {
+  signupContainer: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    paddingHorizontal: 16,
-    paddingBottom: 20,
+    marginBottom: 20,
   },
-  bottomText: {
+  noAccountText: {
     fontSize: 14,
     fontFamily: 'regular',
   },
@@ -349,6 +533,72 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontFamily: 'semiBold',
     color: COLORS.primary,
+  },
+  forgotContainer: {
+    alignItems: 'center',
+    paddingVertical: 12,
+  },
+  forgotText: {
+    fontSize: 16,
+    fontFamily: 'semiBold',
+    color: COLORS.primary,
+  },
+  pinContainer: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    gap: 12,
+    marginBottom: 20,
+  },
+  pinInput: {
+    width: 60,
+    height: 60,
+    borderRadius: 12,
+    borderWidth: 2,
+    textAlign: 'center',
+    fontSize: 20,
+    fontFamily: 'bold',
+    backgroundColor: COLORS.white,
+  },
+  testInfoContainer: {
+    alignItems: 'center',
+    marginBottom: 20,
+  },
+  testInfoBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: COLORS.tansparentPrimary,
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    borderRadius: 20,
+  },
+  testInfoText: {
+    fontSize: 12,
+    fontFamily: 'medium',
+    color: COLORS.primary,
+    marginLeft: 4,
+  },
+  attemptsContainer: {
+    alignItems: 'center',
+    marginBottom: 20,
+  },
+  attemptsText: {
+    fontSize: 14,
+    fontFamily: 'medium',
+    textAlign: 'center',
+  },
+  verifyButton: {
+    borderRadius: 30,
+    marginBottom: 20,
+  },
+  backToPhoneContainer: {
+    alignItems: 'center',
+  },
+  backToPhoneButton: {
+    paddingVertical: 12,
+  },
+  backToPhoneText: {
+    fontSize: 14,
+    fontFamily: 'semiBold',
   },
 });
 

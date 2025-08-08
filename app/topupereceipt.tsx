@@ -9,6 +9,7 @@ import * as Clipboard from 'expo-clipboard';
 import { useTheme } from '../theme/ThemeProvider';
 import { NavigationProp } from '@react-navigation/native';
 import { useNavigation } from 'expo-router';
+import { formatCFA } from '@/utils/currency';
 
 // Transaction ereceipt
 const TopupEReceipt = () => {
@@ -173,7 +174,7 @@ const TopupEReceipt = () => {
                         }]}>Amount</Text>
                         <Text style={[styles.viewRight, {
                             color: dark ? COLORS.white : COLORS.black
-                        }]}>$3200</Text>
+                        }]}>10 000 FCFA</Text>
                     </View>
                     <View style={styles.viewContainer}>
                         <Text style={[styles.viewLeft, {
@@ -181,7 +182,7 @@ const TopupEReceipt = () => {
                         }]}>Tax</Text>
                         <Text style={[styles.viewRight, {
                             color: dark ? COLORS.white : COLORS.black
-                        }]}>$5.55</Text>
+                        }]}>500 FCFA</Text>
                     </View>
                     <View style={styles.viewContainer}>
                         <Text style={[styles.viewLeft, {
@@ -202,7 +203,7 @@ const TopupEReceipt = () => {
                         }]}>Total</Text>
                         <Text style={[styles.viewRight, {
                             color: dark ? COLORS.white : COLORS.black
-                        }]}>$605.55</Text>
+                        }]}>10 500 FCFA</Text>
                     </View>
                     <View style={styles.viewContainer}>
                         <Text style={[styles.viewLeft, {

@@ -8,7 +8,6 @@ import {
   Alert,
   KeyboardAvoidingView,
   Platform,
-  Dimensions,
   Animated
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -17,14 +16,12 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 
-import { COLORS, SIZES, icons, images, illustrations } from '../constants';
+import { COLORS, icons, illustrations } from '../constants';
 import { useTheme } from '../theme/ThemeProvider';
 import Button from '../components/Button';
 import Input from '../components/Input';
 import { validateInput } from '../utils/actions/formActions';
 import { reducer } from '../utils/reducers/formReducers';
-
-const { width, height } = Dimensions.get('window');
 
 interface FormState {
   inputValues: {
@@ -32,8 +29,8 @@ interface FormState {
     confirmPassword: string;
   };
   inputValidities: {
-    password: boolean | undefined;
-    confirmPassword: boolean | undefined;
+    password: string | undefined;
+    confirmPassword: string | undefined;
   };
   formIsValid: boolean;
 }
@@ -44,8 +41,8 @@ const initialState: FormState = {
     confirmPassword: '',
   },
   inputValidities: {
-    password: false,
-    confirmPassword: false,
+    password: undefined,
+    confirmPassword: undefined,
   },
   formIsValid: false,
 };
@@ -77,7 +74,7 @@ const CreateNewPassword = () => {
         useNativeDriver: true,
       }),
     ]).start();
-  }, []);
+  }, [fadeAnimation, slideAnimation]);
 
   const inputChangedHandler = useCallback(
     (inputId: string, inputValue: string) => {
@@ -174,7 +171,7 @@ const CreateNewPassword = () => {
           }]
         );
       }, 2000);
-    } catch (error) {
+    } catch {
       setIsLoading(false);
       Alert.alert('Erreur', 'Impossible de créer le mot de passe. Veuillez réessayer.');
     }
@@ -225,10 +222,10 @@ const CreateNewPassword = () => {
                 }
               ]}
             >
-              {/* Illustration - Corrigé : utilisation de passwordDark au lieu de newPasswordDark */}
+              {/* Illustration */}
               <View style={styles.illustrationContainer}>
                 <Image
-                  source={dark ? illustrations.passwordDark : illustrations.newPassword}
+                  source={dark ? illustrations.passwordDark : illustrations.password}
                   resizeMode="contain"
                   style={styles.illustration}
                 />
@@ -252,7 +249,7 @@ const CreateNewPassword = () => {
                     <Input
                       id="password"
                       onInputChanged={inputChangedHandler}
-                      errorText={formState.inputValidities['password']}
+                      errorText={formState.inputValidities.password ? [formState.inputValidities.password] : undefined}
                       autoCapitalize="none"
                       placeholder="Saisissez votre nouveau mot de passe"
                       placeholderTextColor={dark ? COLORS.grayTie : COLORS.grayscale600}
@@ -301,7 +298,7 @@ const CreateNewPassword = () => {
                     <Input
                       id="confirmPassword"
                       onInputChanged={inputChangedHandler}
-                      errorText={formState.inputValidities['confirmPassword']}
+                      errorText={formState.inputValidities.confirmPassword ? [formState.inputValidities.confirmPassword] : undefined}
                       autoCapitalize="none"
                       placeholder="Confirmez votre nouveau mot de passe"
                       placeholderTextColor={dark ? COLORS.grayTie : COLORS.grayscale600}

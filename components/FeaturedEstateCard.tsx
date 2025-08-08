@@ -3,6 +3,7 @@ import React, { useState } from 'react';
 import { COLORS, SIZES, icons } from '../constants';
 import { FontAwesome } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
+import { formatCFA } from '../utils/currency';
 
 interface FeaturedEstateCardProps {
   name: string;
@@ -45,8 +46,8 @@ const FeaturedEstateCard: React.FC<FeaturedEstateCardProps> = ({
           <Text style={styles.location}>{location}</Text>
           <View style={styles.bottomPriceContainer}>
             <View style={styles.priceContainer}>
-              <Text style={styles.price}>${price}</Text>
-              <Text style={styles.durationText}> / night</Text>
+              <Text style={styles.price}>{formatCFA(price)}</Text>
+              <Text style={styles.durationText}> / nuit</Text>
             </View>
             <TouchableOpacity onPress={() => setIsFavourite(!isFavourite)}>
               <Image

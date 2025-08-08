@@ -1,87 +1,112 @@
-import React, { useState, useCallback, useReducer, useEffect } from 'react';
+import React, { useState, useCallback, useReducer, useEffect, useRef } from 'react';
 import {
   View,
   Text,
   StyleSheet,
   TouchableOpacity,
-  Image,
   Alert,
   KeyboardAvoidingView,
   Platform,
-  Modal,
-  Dimensions
+  Animated,
+  TextInput
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { ScrollView } from 'react-native-virtualized-view';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
-import Checkbox from 'expo-checkbox';
-import * as ImagePicker from 'expo-image-picker';
+import { Checkbox } from 'expo-checkbox';
 import { useRouter } from 'expo-router';
 
-import { COLORS, SIZES, icons, images } from '../constants';
+import { COLORS, icons } from '../constants';
 import { useTheme } from '../theme/ThemeProvider';
 import Button from '../components/Button';
 import Input from '../components/Input';
-import SocialButton from '../components/SocialButton';
-import OrSeparator from '../components/OrSeparator';
 import { validateInput } from '../utils/actions/formActions';
 import { reducer } from '../utils/reducers/formReducers';
 
-const { width, height } = Dimensions.get('window');
-
 interface FormState {
   inputValues: {
-    firstName: string;
-    lastName: string;
-    phone: string;
+    fullName: string;
     email: string;
-    password: string;
-    confirmPassword: string;
+    phoneNumber: string;
   };
   inputValidities: {
-    firstName: boolean | undefined;
-    lastName: boolean | undefined;
-    phone: boolean | undefined;
-    email: boolean | undefined;
-    password: boolean | undefined;
-    confirmPassword: boolean | undefined;
+    fullName: string | undefined;
+    email: string | undefined;
+    phoneNumber: string | undefined;
   };
   formIsValid: boolean;
 }
 
 const initialState: FormState = {
   inputValues: {
-    firstName: '',
-    lastName: '',
-    phone: '',
+    fullName: '',
     email: '',
-    password: '',
-    confirmPassword: '',
+    phoneNumber: '',
   },
   inputValidities: {
-    firstName: false,
-    lastName: false,
-    phone: false,
-    email: false,
-    password: false,
-    confirmPassword: false,
+    fullName: undefined,
+    email: undefined,
+    phoneNumber: undefined,
   },
   formIsValid: false,
 };
+
+type SignupStep = 'info' | 'otp' | 'pin' | 'confirm';
 
 const Signup = () => {
   const router = useRouter();
   const { colors, dark } = useTheme();
   const [formState, dispatchFormState] = useReducer(reducer, initialState);
-  const [error, setError] = useState<string | null>(null);
   const [isChecked, setChecked] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
-  const [showPassword, setShowPassword] = useState(false);
-  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
-  const [profileImage, setProfileImage] = useState<string | null>(null);
-  const [userType, setUserType] = useState<'individual' | 'professional'>('individual');
-  const [showUserTypeModal, setShowUserTypeModal] = useState(true);
+  const [currentStep, setCurrentStep] = useState<SignupStep>('info');
+  
+  // OTP states
+  const [otp, setOtp] = useState(['', '', '', '']);
+  const [otpAttempts, setOtpAttempts] = useState(0);
+  const [resendTimer, setResendTimer] = useState(0);
+  
+  // PIN states
+  const [pin, setPin] = useState(['', '', '', '']);
+  const [confirmPin, setConfirmPin] = useState(['', '', '', '']);
+  const [showConfirmPin, setShowConfirmPin] = useState(false);
+
+  const inputRefs = useRef<(TextInput | null)[]>([]);
+  const pinRefs = useRef<(TextInput | null)[]>([]);
+  const confirmPinRefs = useRef<(TextInput | null)[]>([]);
+
+  // Animations
+  const fadeAnimation = useRef(new Animated.Value(0)).current;
+  const slideAnimation = useRef(new Animated.Value(50)).current;
+  const shakeAnimation = useRef(new Animated.Value(0)).current;
+
+  useEffect(() => {
+    // Start entrance animations
+    Animated.parallel([
+      Animated.timing(fadeAnimation, {
+        toValue: 1,
+        duration: 800,
+        useNativeDriver: true,
+      }),
+      Animated.timing(slideAnimation, {
+        toValue: 0,
+        duration: 600,
+        useNativeDriver: true,
+      }),
+    ]).start();
+  }, [fadeAnimation, slideAnimation]);
+
+  // Resend timer effect
+  useEffect(() => {
+    let interval: any;
+    if (resendTimer > 0) {
+      interval = setInterval(() => {
+        setResendTimer(prev => prev - 1);
+      }, 1000);
+    }
+    return () => clearInterval(interval);
+  }, [resendTimer]);
 
   const inputChangedHandler = useCallback(
     (inputId: string, inputValue: string) => {
@@ -95,142 +120,212 @@ const Signup = () => {
     [dispatchFormState]
   );
 
-  useEffect(() => {
-    if (error) {
-      Alert.alert('Erreur d\'inscription', error);
-    }
-  }, [error]);
-
-  const pickImage = async () => {
-    const result = await ImagePicker.launchImageLibraryAsync({
-      mediaTypes: ImagePicker.MediaTypeOptions.Images,
-      allowsEditing: true,
-      aspect: [1, 1],
-      quality: 1,
-    });
-
-    if (!result.canceled) {
-      setProfileImage(result.assets[0].uri);
-    }
+  const shakeInputs = () => {
+    Animated.sequence([
+      Animated.timing(shakeAnimation, { toValue: 10, duration: 100, useNativeDriver: true }),
+      Animated.timing(shakeAnimation, { toValue: -10, duration: 100, useNativeDriver: true }),
+      Animated.timing(shakeAnimation, { toValue: 10, duration: 100, useNativeDriver: true }),
+      Animated.timing(shakeAnimation, { toValue: 0, duration: 100, useNativeDriver: true }),
+    ]).start();
   };
 
-  const handleSignup = async () => {
-    if (!isChecked) {
-      Alert.alert('Conditions d\'utilisation', 'Veuillez accepter les conditions d\'utilisation');
+  const handleInfoSubmit = async () => {
+    if (!formState.formIsValid) {
+      Alert.alert('Informations incomplètes', 'Veuillez remplir tous les champs correctement');
       return;
     }
 
-    if (!profileImage) {
-      Alert.alert('Photo requise', 'Veuillez ajouter une photo de profil');
+    if (!isChecked) {
+      Alert.alert('Conditions d\'utilisation', 'Vous devez accepter les conditions d\'utilisation');
       return;
     }
 
     setIsLoading(true);
+
     try {
-      // Simulation d'inscription réussie
       setTimeout(() => {
         setIsLoading(false);
-        if (userType === 'professional') {
-          router.push('/professional-signup');
-        } else {
-          router.push('/otpverification');
-        }
-      }, 2000);
-    } catch (err) {
+        setCurrentStep('otp');
+        setResendTimer(30);
+        setTimeout(() => inputRefs.current[0]?.focus(), 100);
+      }, 1500);
+    } catch {
       setIsLoading(false);
-      setError('Erreur lors de l\'inscription');
+      Alert.alert('Erreur', 'Impossible de créer le compte. Veuillez réessayer.');
     }
   };
 
-  const appleAuthHandler = () => {
-    console.log('Apple Authentication');
-    router.replace('/(tabs)');
+  const handleOtpChange = (value: string, index: number) => {
+    const cleanValue = value.replace(/[^0-9]/g, '');
+    
+    if (cleanValue.length <= 1) {
+      const newOtp = [...otp];
+      newOtp[index] = cleanValue;
+      setOtp(newOtp);
+
+      if (cleanValue && index < 3) {
+        inputRefs.current[index + 1]?.focus();
+      }
+
+      if (index === 3 && cleanValue) {
+        const completeOtp = [...newOtp];
+        completeOtp[3] = cleanValue;
+        if (completeOtp.every(digit => digit !== '')) {
+          setTimeout(() => handleOtpVerify(completeOtp.join('')), 300);
+        }
+      }
+    }
   };
 
-  const facebookAuthHandler = () => {
-    console.log('Facebook Authentication');
-    router.replace('/(tabs)');
+  const handleOtpVerify = async (otpCode?: string) => {
+    const codeToVerify = otpCode || otp.join('');
+    
+    if (codeToVerify.length !== 4) {
+      Alert.alert('Code incomplet', 'Veuillez saisir le code à 4 chiffres');
+      return;
+    }
+
+    setIsLoading(true);
+
+    try {
+      setTimeout(() => {
+        if (codeToVerify === '1234') {
+          setIsLoading(false);
+          setCurrentStep('pin');
+          setTimeout(() => pinRefs.current[0]?.focus(), 100);
+        } else {
+          setIsLoading(false);
+          setOtpAttempts(prev => prev + 1);
+          
+          if (otpAttempts + 1 >= 3) {
+            Alert.alert('Trop de tentatives', 'Veuillez recommencer l\'inscription.');
+          } else {
+            shakeInputs();
+            setOtp(['', '', '', '']);
+            inputRefs.current[0]?.focus();
+            Alert.alert('Code incorrect', `Il vous reste ${3 - otpAttempts - 1} tentative(s).`);
+          }
+        }
+      }, 1500);
+    } catch {
+      setIsLoading(false);
+      Alert.alert('Erreur', 'Une erreur est survenue. Veuillez réessayer.');
+    }
   };
 
-  const googleAuthHandler = () => {
-    console.log('Google Authentication');
-    router.replace('/(tabs)');
+  const handlePinChange = (value: string, index: number, isConfirm: boolean = false) => {
+    const cleanValue = value.replace(/[^0-9]/g, '');
+    
+    if (cleanValue.length <= 1) {
+      const refs = isConfirm ? confirmPinRefs : pinRefs;
+      const currentPin = isConfirm ? confirmPin : pin;
+      const setCurrentPin = isConfirm ? setConfirmPin : setPin;
+      
+      const newPin = [...currentPin];
+      newPin[index] = cleanValue;
+      setCurrentPin(newPin);
+
+      if (cleanValue && index < 3) {
+        refs.current[index + 1]?.focus();
+      }
+
+      // Auto switch to confirm PIN when first PIN is complete
+      if (!isConfirm && index === 3 && cleanValue && newPin.every(digit => digit !== '')) {
+        setShowConfirmPin(true);
+        setTimeout(() => confirmPinRefs.current[0]?.focus(), 100);
+      }
+
+      // Auto verify when both PINs are complete
+      if (isConfirm && index === 3 && cleanValue && newPin.every(digit => digit !== '')) {
+        if (pin.join('') === newPin.join('')) {
+          setTimeout(() => handlePinSubmit(), 300);
+        } else {
+          shakeInputs();
+          Alert.alert('PIN différents', 'Les codes PIN ne correspondent pas');
+          setConfirmPin(['', '', '', '']);
+          confirmPinRefs.current[0]?.focus();
+        }
+      }
+    }
   };
 
-  const renderUserTypeModal = () => (
-    <Modal
-      visible={showUserTypeModal}
-      transparent
-      animationType="slide"
-      onRequestClose={() => setShowUserTypeModal(false)}
-    >
-      <View style={styles.modalOverlay}>
-        <View style={[styles.modalContainer, { backgroundColor: colors.background }]}>
-          <Text style={[styles.modalTitle, { color: colors.text }]}>
-            Type de compte
-          </Text>
-          <Text style={[styles.modalSubtitle, { color: dark ? COLORS.grayscale400 : COLORS.grayscale700 }]}>
-            Choisissez le type de compte qui vous convient
-          </Text>
+  const handlePinSubmit = async () => {
+    if (pin.length !== 4 || confirmPin.length !== 4) {
+      Alert.alert('PIN incomplet', 'Veuillez saisir les deux codes PIN');
+      return;
+    }
 
-          <TouchableOpacity
-            style={[
-              styles.userTypeOption,
-              userType === 'individual' && styles.selectedUserType,
-              { borderColor: dark ? COLORS.dark3 : COLORS.grayscale200 }
-            ]}
-            onPress={() => setUserType('individual')}
-          >
-            <View style={styles.userTypeIcon}>
-              <Ionicons name="person" size={24} color={COLORS.primary} />
+    if (pin.join('') !== confirmPin.join('')) {
+      Alert.alert('PIN différents', 'Les codes PIN ne correspondent pas');
+      return;
+    }
+
+    setIsLoading(true);
+
+    try {
+      setTimeout(() => {
+        setIsLoading(false);
+        setCurrentStep('confirm');
+      }, 1500);
+    } catch {
+      setIsLoading(false);
+      Alert.alert('Erreur', 'Impossible de créer le PIN. Veuillez réessayer.');
+    }
+  };
+
+  const handleFinalSubmit = () => {
+    Alert.alert(
+      'Compte créé avec succès !',
+      'Votre compte REASA a été créé. Vous pouvez maintenant vous connecter.',
+      [{
+        text: 'Se connecter',
+        onPress: () => router.replace('/login')
+      }]
+    );
+  };
+
+  const handleResendOtp = () => {
+    if (resendTimer > 0) return;
+    
+    setResendTimer(30);
+    Alert.alert('Code renvoyé', 'Un nouveau code de vérification a été envoyé');
+  };
+
+  const renderStepIndicator = () => {
+    const steps = ['info', 'otp', 'pin', 'confirm'];
+    const currentIndex = steps.indexOf(currentStep);
+    
+    return (
+      <View style={styles.stepIndicator}>
+        {steps.map((step, index) => (
+          <View key={step} style={styles.stepRow}>
+            <View style={[
+              styles.stepDot,
+              {
+                backgroundColor: index <= currentIndex ? COLORS.primary : 
+                  dark ? COLORS.dark3 : COLORS.grayscale200
+              }
+            ]}>
+              {index < currentIndex ? (
+                <Ionicons name="checkmark" size={12} color={COLORS.white} />
+              ) : (
+                <Text style={[styles.stepNumber, { color: index === currentIndex ? COLORS.white : colors.text }]}>
+                  {index + 1}
+                </Text>
+              )}
             </View>
-            <View style={styles.userTypeContent}>
-              <Text style={[styles.userTypeTitle, { color: colors.text }]}>
-                Particulier
-              </Text>
-              <Text style={[styles.userTypeDescription, { color: dark ? COLORS.grayscale400 : COLORS.grayscale700 }]}>
-                Pour rechercher et louer des propriétés
-              </Text>
-            </View>
-            {userType === 'individual' && (
-              <Ionicons name="checkmark-circle" size={24} color={COLORS.primary} />
+            {index < steps.length - 1 && (
+              <View style={[
+                styles.stepLine,
+                { backgroundColor: index < currentIndex ? COLORS.primary : 
+                  dark ? COLORS.dark3 : COLORS.grayscale200 }
+              ]} />
             )}
-          </TouchableOpacity>
-
-          <TouchableOpacity
-            style={[
-              styles.userTypeOption,
-              userType === 'professional' && styles.selectedUserType,
-              { borderColor: dark ? COLORS.dark3 : COLORS.grayscale200 }
-            ]}
-            onPress={() => setUserType('professional')}
-          >
-            <View style={styles.userTypeIcon}>
-              <Ionicons name="business" size={24} color={COLORS.primary} />
-            </View>
-            <View style={styles.userTypeContent}>
-              <Text style={[styles.userTypeTitle, { color: colors.text }]}>
-                Professionnel
-              </Text>
-              <Text style={[styles.userTypeDescription, { color: dark ? COLORS.grayscale400 : COLORS.grayscale700 }]}>
-                Pour proposer des propriétés en location
-              </Text>
-            </View>
-            {userType === 'professional' && (
-              <Ionicons name="checkmark-circle" size={24} color={COLORS.primary} />
-            )}
-          </TouchableOpacity>
-
-          <Button
-            title="Continuer"
-            filled
-            onPress={() => setShowUserTypeModal(false)}
-            style={styles.continueButton}
-          />
-        </View>
+          </View>
+        ))}
       </View>
-    </Modal>
-  );
+    );
+  };
 
   return (
     <SafeAreaView style={[styles.area, { backgroundColor: colors.background }]}>
@@ -254,211 +349,316 @@ const Signup = () => {
                 color={dark ? COLORS.white : COLORS.black}
               />
             </TouchableOpacity>
-            <View style={styles.userTypeBadge}>
-              <Ionicons 
-                name={userType === 'individual' ? 'person' : 'business'} 
-                size={16} 
-                color={COLORS.primary} 
-              />
-              <Text style={styles.userTypeBadgeText}>
-                {userType === 'individual' ? 'Particulier' : 'Professionnel'}
-              </Text>
-            </View>
+            <Text style={[styles.headerTitle, { color: colors.text }]}>
+              Inscription
+            </Text>
+            <View style={styles.headerSpacer} />
           </View>
+
+          {/* Step Indicator */}
+          {renderStepIndicator()}
 
           <ScrollView showsVerticalScrollIndicator={false} style={styles.scrollView}>
-            {/* Logo */}
-            <View style={styles.logoContainer}>
-              <Image source={images.logo} resizeMode="contain" style={styles.logo} />
-              <Text style={[styles.welcomeText, { color: colors.text }]}>
-                Créer un compte
-              </Text>
-              <Text style={[styles.subtitle, { color: dark ? COLORS.grayscale400 : COLORS.grayscale700 }]}>
-                Rejoignez REASA et trouvez votre nouveau chez-vous
-              </Text>
-            </View>
-
-            {/* Profile Image */}
-            <View style={styles.profileImageContainer}>
-              <TouchableOpacity onPress={pickImage} style={styles.profileImageButton}>
-                {profileImage ? (
-                  <Image source={{ uri: profileImage }} style={styles.profileImage} />
-                ) : (
-                  <View style={[styles.profileImagePlaceholder, { backgroundColor: dark ? COLORS.dark3 : COLORS.grayscale100 }]}>
-                    <Ionicons name="camera" size={32} color={COLORS.primary} />
+            <Animated.View
+              style={[
+                styles.content,
+                { 
+                  opacity: fadeAnimation,
+                  transform: [{ translateY: slideAnimation }]
+                }
+              ]}
+            >
+              {currentStep === 'info' && (
+                <View style={styles.stepContainer}>
+                  <View style={styles.titleContainer}>
+                    <Text style={[styles.title, { color: colors.text }]}>
+                      Créer un compte
+                    </Text>
+                    <Text style={[styles.subtitle, { color: dark ? COLORS.grayscale400 : COLORS.grayscale700 }]}>
+                      Remplissez vos informations pour commencer
+                    </Text>
                   </View>
-                )}
-                <View style={styles.cameraIcon}>
-                  <Ionicons name="camera" size={16} color={COLORS.white} />
+
+                  <View style={styles.formContainer}>
+                    <Input
+                      id="fullName"
+                      onInputChanged={inputChangedHandler}
+                      errorText={formState.inputValidities.fullName ? [formState.inputValidities.fullName] : undefined}
+                      placeholder="Nom complet"
+                      placeholderTextColor={dark ? COLORS.grayTie : COLORS.grayscale600}
+                      icon={icons.user}
+                    />
+
+                    <Input
+                      id="email"
+                      onInputChanged={inputChangedHandler}
+                      errorText={formState.inputValidities.email ? [formState.inputValidities.email] : undefined}
+                      placeholder="Adresse e-mail"
+                      placeholderTextColor={dark ? COLORS.grayTie : COLORS.grayscale600}
+                      icon={icons.email}
+                      keyboardType="email-address"
+                    />
+
+                    <Input
+                      id="phoneNumber"
+                      onInputChanged={inputChangedHandler}
+                      errorText={formState.inputValidities.phoneNumber ? [formState.inputValidities.phoneNumber] : undefined}
+                      placeholder="Numéro de téléphone"
+                      placeholderTextColor={dark ? COLORS.grayTie : COLORS.grayscale600}
+                      icon={icons.call}
+                      keyboardType="phone-pad"
+                    />
+                  </View>
+
+                  <View style={styles.termsContainer}>
+                    <Checkbox
+                      style={styles.checkbox}
+                      value={isChecked}
+                      onValueChange={setChecked}
+                      color={isChecked ? COLORS.primary : undefined}
+                    />
+                    <Text style={[styles.termsText, { color: dark ? COLORS.white : COLORS.black }]}>
+                      J&apos;accepte les{' '}
+                      <Text style={styles.termsLink}>conditions d&apos;utilisation</Text>
+                      {' '}et la{' '}
+                      <Text style={styles.termsLink}>politique de confidentialité</Text>
+                    </Text>
+                  </View>
+
+                  <Button
+                    title={isLoading ? 'Création...' : 'Continuer'}
+                    filled
+                    onPress={handleInfoSubmit}
+                    style={styles.continueButton}
+                    disabled={isLoading || !formState.formIsValid || !isChecked}
+                  />
                 </View>
-              </TouchableOpacity>
-              <Text style={[styles.profileImageText, { color: dark ? COLORS.grayscale400 : COLORS.grayscale700 }]}>
-                Photo de profil *
-              </Text>
-            </View>
+              )}
 
-            {/* Form */}
-            <View style={styles.formContainer}>
-              <Input
-                id="firstName"
-                onInputChanged={inputChangedHandler}
-                errorText={formState.inputValidities['firstName']}
-                placeholder="Prénom *"
-                placeholderTextColor={dark ? COLORS.grayTie : COLORS.grayscale600}
-                icon={icons.profile}
-              />
+              {currentStep === 'otp' && (
+                <View style={styles.stepContainer}>
+                  <View style={styles.titleContainer}>
+                    <Text style={[styles.title, { color: colors.text }]}>
+                      Code de vérification
+                    </Text>
+                    <Text style={[styles.subtitle, { color: dark ? COLORS.grayscale400 : COLORS.grayscale700 }]}>
+                      Saisissez le code à 4 chiffres envoyé au{'\n'}
+                      {formState.inputValues.phoneNumber}
+                    </Text>
+                  </View>
 
-              <Input
-                id="lastName"
-                onInputChanged={inputChangedHandler}
-                errorText={formState.inputValidities['lastName']}
-                placeholder="Nom *"
-                placeholderTextColor={dark ? COLORS.grayTie : COLORS.grayscale600}
-                icon={icons.profile}
-              />
+                  <Animated.View
+                    style={[
+                      styles.otpContainer,
+                      { transform: [{ translateX: shakeAnimation }] }
+                    ]}
+                  >
+                    {otp.map((digit, index) => (
+                      <TextInput
+                        key={index}
+                        ref={(ref) => {
+                          if (ref) inputRefs.current[index] = ref;
+                        }}
+                        style={[
+                          styles.otpInput,
+                          {
+                            backgroundColor: dark ? COLORS.dark3 : COLORS.white,
+                            borderColor: digit ? COLORS.primary : 
+                              dark ? COLORS.dark3 : COLORS.grayscale200,
+                            color: colors.text,
+                          }
+                        ]}
+                        value={digit}
+                        onChangeText={(text) => handleOtpChange(text, index)}
+                        keyboardType="number-pad"
+                        maxLength={1}
+                        selectTextOnFocus
+                      />
+                    ))}
+                  </Animated.View>
 
-              <Input
-                id="phone"
-                onInputChanged={inputChangedHandler}
-                errorText={formState.inputValidities['phone']}
-                placeholder="Numéro de téléphone *"
-                placeholderTextColor={dark ? COLORS.grayTie : COLORS.grayscale600}
-                icon={icons.call}
-                keyboardType="phone-pad"
-              />
+                  <View style={styles.testInfoContainer}>
+                    <Text style={styles.testInfoText}>Code de test : 1234</Text>
+                  </View>
 
-              <Input
-                id="email"
-                onInputChanged={inputChangedHandler}
-                errorText={formState.inputValidities['email']}
-                placeholder="Email"
-                placeholderTextColor={dark ? COLORS.grayTie : COLORS.grayscale600}
-                icon={icons.email}
-                keyboardType="email-address"
-              />
-              
-              <View style={styles.passwordContainer}>
-                <Input
-                  id="password"
-                  onInputChanged={inputChangedHandler}
-                  errorText={formState.inputValidities['password']}
-                  autoCapitalize="none"
-                  placeholder="Mot de passe *"
-                  placeholderTextColor={dark ? COLORS.grayTie : COLORS.grayscale600}
-                  icon={icons.padlock}
-                  secureTextEntry={!showPassword}
-                />
-                <TouchableOpacity
-                  style={styles.passwordToggle}
-                  onPress={() => setShowPassword(!showPassword)}
-                >
-                  <Ionicons
-                    name={showPassword ? 'eye-off' : 'eye'}
-                    size={20}
-                    color={dark ? COLORS.grayscale400 : COLORS.grayscale600}
+                  <Button
+                    title={isLoading ? 'Vérification...' : 'Vérifier'}
+                    filled
+                    onPress={() => handleOtpVerify()}
+                    style={styles.verifyButton}
+                    disabled={isLoading || otp.some(digit => !digit)}
                   />
-                </TouchableOpacity>
-              </View>
 
-              <View style={styles.passwordContainer}>
-                <Input
-                  id="confirmPassword"
-                  onInputChanged={inputChangedHandler}
-                  errorText={formState.inputValidities['confirmPassword']}
-                  autoCapitalize="none"
-                  placeholder="Confirmer le mot de passe *"
-                  placeholderTextColor={dark ? COLORS.grayTie : COLORS.grayscale600}
-                  icon={icons.padlock}
-                  secureTextEntry={!showConfirmPassword}
-                />
-                <TouchableOpacity
-                  style={styles.passwordToggle}
-                  onPress={() => setShowConfirmPassword(!showConfirmPassword)}
-                >
-                  <Ionicons
-                    name={showConfirmPassword ? 'eye-off' : 'eye'}
-                    size={20}
-                    color={dark ? COLORS.grayscale400 : COLORS.grayscale600}
+                  <View style={styles.resendContainer}>
+                    <TouchableOpacity 
+                      onPress={handleResendOtp}
+                      disabled={resendTimer > 0}
+                      style={styles.resendButton}
+                    >
+                      <Text style={[
+                        styles.resendText,
+                        { color: resendTimer > 0 ? COLORS.grayscale400 : COLORS.primary }
+                      ]}>
+                        {resendTimer > 0 ? `Renvoyer (${resendTimer}s)` : 'Renvoyer le code'}
+                      </Text>
+                    </TouchableOpacity>
+                  </View>
+                </View>
+              )}
+
+              {currentStep === 'pin' && (
+                <View style={styles.stepContainer}>
+                  <View style={styles.titleContainer}>
+                    <Text style={[styles.title, { color: colors.text }]}>
+                      Créer un code PIN
+                    </Text>
+                    <Text style={[styles.subtitle, { color: dark ? COLORS.grayscale400 : COLORS.grayscale700 }]}>
+                      Choisissez un code PIN à 4 chiffres pour sécuriser votre compte
+                    </Text>
+                  </View>
+
+                  <Text style={[styles.pinLabel, { color: colors.text }]}>
+                    Code PIN
+                  </Text>
+                  <View style={styles.pinContainer}>
+                    {pin.map((digit, index) => (
+                      <TextInput
+                        key={index}
+                        ref={(ref) => {
+                          if (ref) pinRefs.current[index] = ref;
+                        }}
+                        style={[
+                          styles.pinInput,
+                          {
+                            backgroundColor: dark ? COLORS.dark3 : COLORS.white,
+                            borderColor: digit ? COLORS.primary : 
+                              dark ? COLORS.dark3 : COLORS.grayscale200,
+                            color: colors.text,
+                          }
+                        ]}
+                        value={digit}
+                        onChangeText={(text) => handlePinChange(text, index, false)}
+                        keyboardType="number-pad"
+                        maxLength={1}
+                        secureTextEntry
+                        selectTextOnFocus
+                      />
+                    ))}
+                  </View>
+
+                  {showConfirmPin && (
+                    <>
+                      <Text style={[styles.pinLabel, { color: colors.text, marginTop: 32 }]}>
+                        Confirmer le code PIN
+                      </Text>
+                      <Animated.View
+                        style={[
+                          styles.pinContainer,
+                          { transform: [{ translateX: shakeAnimation }] }
+                        ]}
+                      >
+                        {confirmPin.map((digit, index) => (
+                          <TextInput
+                            key={index}
+                            ref={(ref) => {
+                              if (ref) confirmPinRefs.current[index] = ref;
+                            }}
+                            style={[
+                              styles.pinInput,
+                              {
+                                backgroundColor: dark ? COLORS.dark3 : COLORS.white,
+                                borderColor: digit ? COLORS.primary : 
+                                  dark ? COLORS.dark3 : COLORS.grayscale200,
+                                color: colors.text,
+                              }
+                            ]}
+                            value={digit}
+                            onChangeText={(text) => handlePinChange(text, index, true)}
+                            keyboardType="number-pad"
+                            maxLength={1}
+                            secureTextEntry
+                            selectTextOnFocus
+                          />
+                        ))}
+                      </Animated.View>
+                    </>
+                  )}
+
+                  <Button
+                    title={isLoading ? 'Création...' : 'Créer le PIN'}
+                    filled
+                    onPress={handlePinSubmit}
+                    style={[styles.createPinButton, { marginTop: showConfirmPin ? 32 : 64 }]}
+                    disabled={isLoading || pin.some(digit => !digit) || (showConfirmPin && confirmPin.some(digit => !digit))}
                   />
-                </TouchableOpacity>
-              </View>
+                </View>
+              )}
 
-              <View style={styles.checkBoxContainer}>
-                <Checkbox
-                  style={styles.checkbox}
-                  value={isChecked}
-                  color={isChecked ? COLORS.primary : COLORS.grayscale400}
-                  onValueChange={setChecked}
-                />
-                <Text style={[styles.termsText, { color: colors.text }]}>
-                  J&aposaccepte les{' '}
-                  <Text style={styles.linkText}>conditions d&aposutilisation</Text>
-                  {' '}et la{' '}
-                  <Text style={styles.linkText}>politique de confidentialité</Text>
-                </Text>
-              </View>
+              {currentStep === 'confirm' && (
+                <View style={styles.stepContainer}>
+                  <View style={styles.illustrationContainer}>
+                    <View style={styles.successIcon}>
+                      <Ionicons name="checkmark" size={48} color={COLORS.white} />
+                    </View>
+                  </View>
 
-              <Button
-                title={isLoading ? 'Inscription...' : 'S\'inscrire'}
-                filled
-                onPress={handleSignup}
-                style={styles.signupButton}
-                disabled={isLoading}
-              />
+                  <View style={styles.titleContainer}>
+                    <Text style={[styles.title, { color: colors.text }]}>
+                      Compte créé avec succès !
+                    </Text>
+                    <Text style={[styles.subtitle, { color: dark ? COLORS.grayscale400 : COLORS.grayscale700 }]}>
+                      Votre compte REASA est prêt. Vous pouvez maintenant explorer les meilleures propriétés immobilières.
+                    </Text>
+                  </View>
 
-              <OrSeparator text="ou continuez avec" />
+                  <View style={styles.summaryContainer}>
+                    <View style={styles.summaryItem}>
+                      <Ionicons name="person" size={20} color={COLORS.primary} />
+                      <Text style={[styles.summaryText, { color: colors.text }]}>
+                        {formState.inputValues.fullName}
+                      </Text>
+                    </View>
+                    <View style={styles.summaryItem}>
+                      <Ionicons name="mail" size={20} color={COLORS.primary} />
+                      <Text style={[styles.summaryText, { color: colors.text }]}>
+                        {formState.inputValues.email}
+                      </Text>
+                    </View>
+                    <View style={styles.summaryItem}>
+                      <Ionicons name="call" size={20} color={COLORS.primary} />
+                      <Text style={[styles.summaryText, { color: colors.text }]}>
+                        {formState.inputValues.phoneNumber}
+                      </Text>
+                    </View>
+                  </View>
 
-              <View style={styles.socialContainer}>
-                <SocialButton
-                  icon={icons.google}
-                  onPress={googleAuthHandler}
-                />
-                <SocialButton
-                  icon={icons.facebook}
-                  onPress={facebookAuthHandler}
-                />
-                <SocialButton
-                  icon={icons.appleLogo}
-                  onPress={appleAuthHandler}
-                  tintColor={dark ? COLORS.white : COLORS.black}
-                />
-              </View>
-            </View>
+                  <Button
+                    title="Se connecter"
+                    filled
+                    onPress={handleFinalSubmit}
+                    style={styles.finalButton}
+                  />
+                </View>
+              )}
+            </Animated.View>
           </ScrollView>
-
-          {/* Bottom */}
-          <View style={styles.bottomContainer}>
-            <Text style={[styles.bottomText, { color: dark ? COLORS.grayscale400 : COLORS.grayscale700 }]}>
-              Vous avez déjà un compte ?{' '}
-            </Text>
-            <TouchableOpacity onPress={() => router.push('/login')}>
-              <Text style={styles.loginText}>Se connecter</Text>
-            </TouchableOpacity>
-          </View>
         </LinearGradient>
       </KeyboardAvoidingView>
-
-      {renderUserTypeModal()}
     </SafeAreaView>
   );
 };
 
 const styles = StyleSheet.create({
-  area: {
-    flex: 1,
-  },
-  container: {
-    flex: 1,
-  },
-  gradientContainer: {
-    flex: 1,
-  },
+  area: { flex: 1 },
+  container: { flex: 1 },
+  gradientContainer: { flex: 1 },
   header: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
     paddingHorizontal: 16,
     paddingTop: 10,
+    paddingBottom: 16,
   },
   backButton: {
     width: 40,
@@ -467,110 +667,74 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  userTypeBadge: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: COLORS.tansparentPrimary,
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    borderRadius: 20,
-  },
-  userTypeBadgeText: {
-    fontSize: 12,
+  headerTitle: {
+    fontSize: 18,
     fontFamily: 'semiBold',
-    color: COLORS.primary,
-    marginLeft: 4,
   },
-  scrollView: {
-    flex: 1,
-  },
-  logoContainer: {
+  headerSpacer: { width: 40 },
+  stepIndicator: {
+    flexDirection: 'row',
+    justifyContent: 'center',
     alignItems: 'center',
     paddingHorizontal: 16,
-    marginTop: 10,
     marginBottom: 20,
   },
-  logo: {
-    width: 80,
-    height: 80,
-    marginBottom: 16,
-  },
-  welcomeText: {
-    fontSize: 24,
-    fontFamily: 'bold',
-    marginBottom: 8,
-    textAlign: 'center',
-  },
-  subtitle: {
-    fontSize: 14,
-    fontFamily: 'regular',
-    textAlign: 'center',
-    lineHeight: 20,
-  },
-  profileImageContainer: {
+  stepRow: {
+    flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: 20,
   },
-  profileImageButton: {
-    position: 'relative',
-    marginBottom: 8,
-  },
-  profileImage: {
-    width: 100,
-    height: 100,
-    borderRadius: 50,
-  },
-  profileImagePlaceholder: {
-    width: 100,
-    height: 100,
-    borderRadius: 50,
-    alignItems: 'center',
-    justifyContent: 'center',
-    borderWidth: 2,
-    borderColor: COLORS.primary,
-    borderStyle: 'dashed',
-  },
-  cameraIcon: {
-    position: 'absolute',
-    bottom: 0,
-    right: 0,
+  stepDot: {
     width: 32,
     height: 32,
     borderRadius: 16,
-    backgroundColor: COLORS.primary,
     alignItems: 'center',
     justifyContent: 'center',
-    borderWidth: 3,
-    borderColor: COLORS.white,
   },
-  profileImageText: {
-    fontSize: 12,
+  stepNumber: {
+    fontSize: 14,
+    fontFamily: 'semiBold',
+  },
+  stepLine: {
+    width: 40,
+    height: 2,
+    marginHorizontal: 8,
+  },
+  scrollView: { flex: 1 },
+  content: {
+    flex: 1,
+    paddingHorizontal: 16,
+  },
+  stepContainer: {
+    flex: 1,
+    paddingBottom: 20,
+  },
+  titleContainer: {
+    alignItems: 'center',
+    marginBottom: 32,
+  },
+  title: {
+    fontSize: 28,
+    fontFamily: 'bold',
+    textAlign: 'center',
+    marginBottom: 12,
+  },
+  subtitle: {
+    fontSize: 16,
     fontFamily: 'regular',
+    textAlign: 'center',
+    lineHeight: 24,
   },
   formContainer: {
-    paddingHorizontal: 16,
-    marginBottom: 20,
+    marginBottom: 24,
   },
-  passwordContainer: {
-    position: 'relative',
-  },
-  passwordToggle: {
-    position: 'absolute',
-    right: 16,
-    top: 20,
-    zIndex: 1,
-  },
-  checkBoxContainer: {
+  termsContainer: {
     flexDirection: 'row',
     alignItems: 'flex-start',
-    marginVertical: 20,
+    marginBottom: 32,
   },
   checkbox: {
     marginRight: 12,
     marginTop: 2,
-    height: 20,
-    width: 20,
-    borderRadius: 4,
   },
   termsText: {
     fontSize: 14,
@@ -578,98 +742,104 @@ const styles = StyleSheet.create({
     flex: 1,
     lineHeight: 20,
   },
-  linkText: {
+  termsLink: {
     color: COLORS.primary,
     fontFamily: 'semiBold',
-  },
-  signupButton: {
-    marginVertical: 16,
-    borderRadius: 30,
-  },
-  socialContainer: {
-    flexDirection: 'row',
-    justifyContent: 'center',
-    gap: 16,
-    marginVertical: 20,
-  },
-  bottomContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingHorizontal: 16,
-    paddingBottom: 20,
-  },
-  bottomText: {
-    fontSize: 14,
-    fontFamily: 'regular',
-  },
-  loginText: {
-    fontSize: 14,
-    fontFamily: 'semiBold',
-    color: COLORS.primary,
-  },
-  // Modal styles
-  modalOverlay: {
-    flex: 1,
-    backgroundColor: 'rgba(0,0,0,0.5)',
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  modalContainer: {
-    width: width * 0.9,
-    borderRadius: 20,
-    padding: 24,
-    maxHeight: height * 0.7,
-  },
-  modalTitle: {
-    fontSize: 24,
-    fontFamily: 'bold',
-    textAlign: 'center',
-    marginBottom: 8,
-  },
-  modalSubtitle: {
-    fontSize: 16,
-    fontFamily: 'regular',
-    textAlign: 'center',
-    marginBottom: 32,
-    lineHeight: 24,
-  },
-  userTypeOption: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    padding: 16,
-    borderRadius: 12,
-    borderWidth: 2,
-    marginBottom: 16,
-  },
-  selectedUserType: {
-    borderColor: COLORS.primary,
-    backgroundColor: COLORS.tansparentPrimary,
-  },
-  userTypeIcon: {
-    width: 48,
-    height: 48,
-    borderRadius: 24,
-    backgroundColor: COLORS.tansparentPrimary,
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginRight: 16,
-  },
-  userTypeContent: {
-    flex: 1,
-  },
-  userTypeTitle: {
-    fontSize: 18,
-    fontFamily: 'semiBold',
-    marginBottom: 4,
-  },
-  userTypeDescription: {
-    fontSize: 14,
-    fontFamily: 'regular',
-    lineHeight: 20,
   },
   continueButton: {
-    marginTop: 16,
+    borderRadius: 30,
+  },
+  otpContainer: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    gap: 12,
+    marginBottom: 20,
+  },
+  otpInput: {
+    width: 60,
+    height: 60,
+    borderRadius: 12,
+    borderWidth: 2,
+    textAlign: 'center',
+    fontSize: 24,
+    fontFamily: 'bold',
+  },
+  testInfoContainer: {
+    alignItems: 'center',
+    marginBottom: 32,
+  },
+  testInfoText: {
+    fontSize: 12,
+    fontFamily: 'medium',
+    color: COLORS.primary,
+    backgroundColor: COLORS.tansparentPrimary,
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 12,
+  },
+  verifyButton: {
+    borderRadius: 30,
+    marginBottom: 20,
+  },
+  resendContainer: {
+    alignItems: 'center',
+  },
+  resendButton: {
+    paddingVertical: 12,
+  },
+  resendText: {
+    fontSize: 14,
+    fontFamily: 'semiBold',
+  },
+  pinLabel: {
+    fontSize: 16,
+    fontFamily: 'semiBold',
+    textAlign: 'center',
+    marginBottom: 16,
+  },
+  pinContainer: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    gap: 12,
+  },
+  pinInput: {
+    width: 60,
+    height: 60,
+    borderRadius: 12,
+    borderWidth: 2,
+    textAlign: 'center',
+    fontSize: 20,
+    fontFamily: 'bold',
+  },
+  createPinButton: {
+    borderRadius: 30,
+  },
+  illustrationContainer: {
+    alignItems: 'center',
+    marginBottom: 32,
+  },
+  successIcon: {
+    width: 100,
+    height: 100,
+    borderRadius: 50,
+    backgroundColor: COLORS.green,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  summaryContainer: {
+    marginVertical: 32,
+  },
+  summaryItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: 12,
+  },
+  summaryText: {
+    fontSize: 16,
+    fontFamily: 'medium',
+    marginLeft: 16,
+  },
+  finalButton: {
     borderRadius: 30,
   },
 });

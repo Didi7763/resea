@@ -1,6 +1,7 @@
 import { View, Text, TouchableOpacity, StyleSheet, Image, ImageSourcePropType, GestureResponderEvent, StyleProp, ViewStyle } from 'react-native';
 import React from 'react';
 import { COLORS, images } from '../constants';
+import { formatCFA } from '../utils/currency';
 
 interface CardProps {
     number: string;
@@ -24,7 +25,7 @@ const Card: React.FC<CardProps> = ({ number, balance, date, onPress, containerSt
             </View>
             <Text style={styles.cardNumber}>{number}</Text>
             <View style={styles.footerContainer}>
-                <Text style={styles.balance}>${balance}</Text>
+                <Text style={styles.balance}>{`${Number(balance).toLocaleString('fr-FR')} FCFA`}</Text>
                 <Text style={styles.date}>{date}</Text>
             </View>
             <Image

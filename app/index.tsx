@@ -26,6 +26,7 @@ const SplashScreen = () => {
   const scaleAnimation = useRef(new Animated.Value(0.5)).current;
   const slideAnimation = useRef(new Animated.Value(50)).current;
   const rotateAnimation = useRef(new Animated.Value(0)).current;
+  const progressAnimation = useRef(new Animated.Value(0)).current;
 
   useEffect(() => {
     // Start entrance animations
@@ -46,6 +47,11 @@ const SplashScreen = () => {
           toValue: 0,
           duration: 800,
           useNativeDriver: true,
+        }),
+        Animated.timing(progressAnimation, {
+          toValue: 1,
+          duration: 1500,
+          useNativeDriver: false,
         }),
       ]).start();
     };
@@ -184,7 +190,7 @@ const SplashScreen = () => {
                 style={[
                   styles.loadingProgress,
                   {
-                    width: fadeAnimation.interpolate({
+                    width: progressAnimation.interpolate({
                       inputRange: [0, 1],
                       outputRange: ['0%', '100%'],
                     }),
