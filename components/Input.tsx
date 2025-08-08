@@ -59,9 +59,9 @@ const Input: FC<InputProps> = (props) => {
           autoCapitalize="none"
         />
       </View>
-      {props.errorText && (
+      {props.errorText && props.errorText.length > 0 && (
         <View style={styles.errorContainer}>
-          <Text style={styles.errorText}>{props.errorText}</Text>
+          <Text style={styles.errorText}>{props.errorText[0]}</Text>
         </View>
       )}
     </View>

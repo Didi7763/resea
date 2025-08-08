@@ -12,24 +12,27 @@ export const reducer = (state: any, action: any) => {
     };
 
     // Un formulaire est valide si :
-    // 1. Aucun champ n'a d'erreur de validation (tous undefined)
-    // 2. Tous les champs ont une valeur non vide
+    // 1. Aucun champ n'a d'erreur de validation (tous undefined ou null)
+    // 2. Tous les champs requis ont une valeur non vide
     
     let updatedFormIsValid = true;
+
+    // Liste des champs requis selon le formulaire
+    const requiredFields = Object.keys(state.inputValues);
 
     // Étape 1: Vérifier s'il y a des erreurs de validation
     for (const key in updatedValidities) {
         const validity = updatedValidities[key];
-        // Si c'est une chaîne, c'est un message d'erreur
-        if (typeof validity === 'string' && validity.length > 0) {
+        // Si c'est une chaîne non vide, c'est un message d'erreur
+        if (validity && typeof validity === 'string' && validity.length > 0) {
             updatedFormIsValid = false;
             break;
         }
     }
 
-    // Étape 2: Vérifier que tous les champs ont une valeur si pas d'erreur
+    // Étape 2: Vérifier que tous les champs requis ont une valeur
     if (updatedFormIsValid) {
-        for (const key in updatedValues) {
+        for (const key of requiredFields) {
             const value = updatedValues[key];
             if (!value || value.toString().trim() === '') {
                 updatedFormIsValid = false;
