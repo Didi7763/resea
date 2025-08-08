@@ -1,9 +1,21 @@
 export const reducer = (state: any, action: any) => {
     const { validationResult, inputId, inputValue } = action;
 
+    // Nettoyer la valeur d'entrée pour éviter les valeurs indésirables
+    let cleanedValue = inputValue;
+    if (typeof inputValue === 'string') {
+        // Supprimer les valeurs de test automatiques communes
+        const testValues = ['test', 'Test', 'TEST', 'example', 'demo'];
+        if (testValues.includes(inputValue.trim())) {
+            cleanedValue = '';
+        }
+        // Nettoyer les espaces en début et fin
+        cleanedValue = inputValue.trim();
+    }
+
     const updatedValues = {
         ...state.inputValues,
-        [inputId]: inputValue,
+        [inputId]: cleanedValue,
     };
 
     const updatedValidities = {

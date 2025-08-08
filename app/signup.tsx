@@ -95,6 +95,23 @@ const Signup = () => {
         useNativeDriver: true,
       }),
     ]).start();
+
+    // Nettoyer les champs au montage du composant
+    dispatchFormState({
+      inputId: 'fullName',
+      validationResult: undefined,
+      inputValue: '',
+    });
+    dispatchFormState({
+      inputId: 'email',
+      validationResult: undefined,
+      inputValue: '',
+    });
+    dispatchFormState({
+      inputId: 'phoneNumber',
+      validationResult: undefined,
+      inputValue: '',
+    });
   }, [fadeAnimation, slideAnimation]);
 
   // Resend timer effect
