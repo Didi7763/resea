@@ -120,10 +120,10 @@ const CancelBookingPaymentMethods = () => {
           <View style={styles.refundContainer}>
             <Text style={[styles.paidText, {
               color: dark ? COLORS.grayscale400 : COLORS.grayscale700,
-            }]}>Paid: $16.00</Text>
+            }]}>Payé: 10 000 FCFA</Text>
             <Text style={[styles.refundText, {
               color: dark ? COLORS.white : COLORS.greyscale900,
-            }]}>Refund: $14.40</Text>
+            }]}>Remboursé: 9 000 FCFA</Text>
           </View>
           <Button
             title="Continue"

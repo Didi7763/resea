@@ -124,6 +124,11 @@ const Profile = () => {
           onPress={() => navigate("settingspayment")}
         />
         <SettingsItem
+          icon={icons.home}
+          name="Mes Résidences"
+          onPress={() => navigate("propertiesmanagement")}
+        />
+        <SettingsItem
           icon={icons.fundOutline}
           name="Topup"
           onPress={() => navigate("topupamount")}

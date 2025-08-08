@@ -3,6 +3,7 @@ import { View, Text, StyleSheet, TouchableOpacity, Image, ImageSourcePropType } 
 import { COLORS, SIZES, icons } from '../constants';
 import { FontAwesome } from '@expo/vector-icons';
 import { useTheme } from '../theme/ThemeProvider';
+import { formatCFA } from '../utils/currency';
 
 interface HorizontalEstateCardProps {
     name: string;
@@ -57,10 +58,10 @@ const HorizontalEstateCard: React.FC<HorizontalEstateCardProps> = ({
                         color: dark ? COLORS.greyscale300 : COLORS.grayscale700
                     }]}>{location}</Text>
                     <View style={styles.priceContainer}>
-                        <Text style={styles.price}>${price}</Text>
+                        <Text style={styles.price}>{formatCFA(price)}</Text>
                         <Text style={[styles.durationText, {
                             color: dark ? COLORS.greyscale300 : COLORS.grayscale700
-                        }]}> / night</Text>
+                        }]}> / nuit</Text>
                     </View>
                 </View>
             </View>
