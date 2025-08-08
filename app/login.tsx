@@ -294,6 +294,7 @@ const Login = () => {
                       placeholderTextColor={dark ? COLORS.grayTie : COLORS.grayscale600}
                       icon={icons.call}
                       keyboardType="phone-pad"
+                      value={formState.inputValues.phoneNumber}
                     />
                   </View>
 
@@ -383,15 +384,7 @@ const Login = () => {
                     ))}
                   </Animated.View>
 
-                  {/* Test Info */}
-                  <View style={styles.testInfoContainer}>
-                    <View style={styles.testInfoBadge}>
-                      <Ionicons name="information-circle" size={16} color={COLORS.primary} />
-                      <Text style={styles.testInfoText}>
-                        Code PIN de test : 1234
-                      </Text>
-                    </View>
-                  </View>
+                  {/* Test Info removed */}
 
                   {/* Attempts Counter */}
                   {attempts > 0 && (

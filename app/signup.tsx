@@ -387,6 +387,7 @@ const Signup = () => {
                       placeholder="Nom complet"
                       placeholderTextColor={dark ? COLORS.grayTie : COLORS.grayscale600}
                       icon={icons.user}
+                      value={formState.inputValues.fullName}
                     />
 
                     <Input
@@ -397,6 +398,7 @@ const Signup = () => {
                       placeholderTextColor={dark ? COLORS.grayTie : COLORS.grayscale600}
                       icon={icons.email}
                       keyboardType="email-address"
+                      value={formState.inputValues.email}
                     />
 
                     <Input
@@ -407,6 +409,7 @@ const Signup = () => {
                       placeholderTextColor={dark ? COLORS.grayTie : COLORS.grayscale600}
                       icon={icons.call}
                       keyboardType="phone-pad"
+                      value={formState.inputValues.phoneNumber}
                     />
                   </View>
 
@@ -477,9 +480,7 @@ const Signup = () => {
                     ))}
                   </Animated.View>
 
-                  <View style={styles.testInfoContainer}>
-                    <Text style={styles.testInfoText}>Code de test : 1234</Text>
-                  </View>
+                  {/* Test info removed */}
 
                   <Button
                     title={isLoading ? 'Vérification...' : 'Vérifier'}

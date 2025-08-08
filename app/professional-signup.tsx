@@ -280,6 +280,7 @@ const ProfessionalSignup = () => {
         placeholder="Nom commercial *"
         placeholderTextColor={dark ? COLORS.grayTie : COLORS.grayscale600}
         icon={icons.home}
+        value={formState.inputValues['businessName']}
       />
 
       <Input
@@ -289,6 +290,7 @@ const ProfessionalSignup = () => {
         placeholder="Type d'activité *"
         placeholderTextColor={dark ? COLORS.grayTie : COLORS.grayscale600}
         icon={icons.work}
+        value={formState.inputValues['businessType']}
       />
 
       <Input
@@ -298,6 +300,7 @@ const ProfessionalSignup = () => {
         placeholder="Adresse commerciale *"
         placeholderTextColor={dark ? COLORS.grayTie : COLORS.grayscale600}
         icon={icons.location}
+        value={formState.inputValues['businessAddress']}
       />
 
       <Input
@@ -308,6 +311,7 @@ const ProfessionalSignup = () => {
         placeholderTextColor={dark ? COLORS.grayTie : COLORS.grayscale600}
         icon={icons.call}
         keyboardType="phone-pad"
+        value={formState.inputValues['businessPhone']}
       />
 
       <Input
@@ -318,6 +322,7 @@ const ProfessionalSignup = () => {
         placeholderTextColor={dark ? COLORS.grayTie : COLORS.grayscale600}
         icon={icons.email}
         keyboardType="email-address"
+        value={formState.inputValues['businessEmail']}
       />
 
       <Input
@@ -327,6 +332,7 @@ const ProfessionalSignup = () => {
         placeholder="Numéro fiscal"
         placeholderTextColor={dark ? COLORS.grayTie : COLORS.grayscale600}
         icon={icons.document}
+        value={formState.inputValues['taxNumber']}
       />
     </View>
   );

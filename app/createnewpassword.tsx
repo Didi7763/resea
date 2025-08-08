@@ -255,6 +255,7 @@ const CreateNewPassword = () => {
                       placeholderTextColor={dark ? COLORS.grayTie : COLORS.grayscale600}
                       icon={icons.padlock}
                       secureTextEntry={!showPassword}
+                      value={formState.inputValues.password}
                     />
                     <TouchableOpacity
                       style={styles.passwordToggle}
@@ -304,6 +305,7 @@ const CreateNewPassword = () => {
                       placeholderTextColor={dark ? COLORS.grayTie : COLORS.grayscale600}
                       icon={icons.padlock}
                       secureTextEntry={!showConfirmPassword}
+                      value={formState.inputValues.confirmPassword}
                     />
                     <TouchableOpacity
                       style={styles.passwordToggle}

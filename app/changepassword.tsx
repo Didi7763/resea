@@ -115,6 +115,7 @@ const ChangePassword = () => {
                         placeholderTextColor={dark ? COLORS.grayTie : COLORS.black}
                         icon={icons.padlock}
                         secureTextEntry={true}
+                        value={formState.inputValues['password']}
                     />
                     <Input
                         onInputChanged={inputChangedHandler}
@@ -125,6 +126,7 @@ const ChangePassword = () => {
                         placeholderTextColor={dark ? COLORS.grayTie : COLORS.black}
                         icon={icons.padlock}
                         secureTextEntry={true}
+                        value={formState.inputValues['newPassword']}
                     />
                     <Input
                         onInputChanged={inputChangedHandler}
@@ -135,6 +137,7 @@ const ChangePassword = () => {
                         placeholderTextColor={dark ? COLORS.grayTie : COLORS.black}
                         icon={icons.padlock}
                         secureTextEntry={true}
+                        value={formState.inputValues['confirmNewPassword']}
                     />
                     <View style={styles.checkBoxContainer}>
                         <View style={{ flexDirection: 'row' }}>

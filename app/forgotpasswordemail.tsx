@@ -73,6 +73,7 @@ const ForgotPasswordEmail = () => {
             placeholderTextColor={dark ? COLORS.grayTie : COLORS.black}
             icon={icons.email}
             keyboardType="email-address"
+            value={formState.inputValues['email']}
           />
           <View style={styles.checkBoxContainer}>
             <View style={{ flexDirection: 'row' }}>
