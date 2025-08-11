@@ -26,7 +26,8 @@ export default function ChatScreen() {
           placeholder="Écris un message"
           value={message}
           onChangeText={setMessage}
-        />
+        autoCapitalize="none"
+          />
         <Button title="Envoyer" onPress={sendMessage} />
       </View>
     </View>

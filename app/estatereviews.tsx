@@ -2,7 +2,7 @@ import { View, Text, StyleSheet, Image, TouchableOpacity, FlatList, Modal, Touch
 import React, { useEffect, useState } from 'react';
 import { COLORS, SIZES, icons, illustrations } from '../constants';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { ScrollView } from 'react-native-virtualized-view';
+import { ScrollView } from 'react-native';
 import ReviewCard from '../components/ReviewCard';
 import { Fontisto } from "@expo/vector-icons";
 import { useTheme } from '../theme/ThemeProvider';
@@ -94,7 +94,8 @@ const EstateReviews = () => {
                                 placeholder="This apartment is so nice 🔥"
                                 placeholderTextColor={dark ? COLORS.secondaryWhite : COLORS.black}
                                 style={styles.modalInput}
-                            />
+                            autoCapitalize="none"
+          />
                             <Button
                                 title="Write Review"
                                 filled
@@ -145,7 +146,7 @@ const EstateReviews = () => {
 
         const filteredReviews = selectedRating === "All" ? apartmentReviews : apartmentReviews.filter(review => review.avgRating === selectedRating);
         return (
-            <ScrollView
+            <View
                 showsVerticalScrollIndicator={false}
                 style={[styles.container, { backgroundColor: colors.background }]}>
                 {/* Horizontal FlatList for rating buttons */}
@@ -171,7 +172,7 @@ const EstateReviews = () => {
                         />
                     )}
                 />
-            </ScrollView>
+            </View>
         )
     }
     return (

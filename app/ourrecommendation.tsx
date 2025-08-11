@@ -3,7 +3,7 @@ import React, { useState } from 'react';
 import { COLORS, SIZES, icons } from "../constants";
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useTheme } from '../theme/ThemeProvider';
-import { ScrollView } from 'react-native-virtualized-view';
+import { ScrollView } from 'react-native';
 import { category, recommendedEstates } from '../data';
 import VerticalEstateCard from '../components/VerticalEstateCard';
 import { NavigationProp } from '@react-navigation/native';

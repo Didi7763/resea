@@ -240,8 +240,8 @@ const EditProfile = () => {
             }}>
               <TouchableOpacity
                 style={[styles.inputBtn, {
-                  backgroundColor: dark ? COLORS.dark2 : COLORS.greyscale500,
-                  borderColor: dark ? COLORS.dark2 : COLORS.greyscale500,
+                  backgroundColor: dark ? COLORS.dark2 : COLORS.grayscale500,
+                  borderColor: dark ? COLORS.dark2 : COLORS.grayscale500,
                 }]}
                 onPress={handleOnPressStartDate}
               >
@@ -250,8 +250,8 @@ const EditProfile = () => {
               </TouchableOpacity>
             </View>
             <View style={[styles.inputContainer, {
-              backgroundColor: dark ? COLORS.dark2 : COLORS.greyscale500,
-              borderColor: dark ? COLORS.dark2 : COLORS.greyscale500,
+              backgroundColor: dark ? COLORS.dark2 : COLORS.grayscale500,
+              borderColor: dark ? COLORS.dark2 : COLORS.grayscale500,
             }]}>
               <TouchableOpacity
                 style={styles.selectFlagContainer}
@@ -281,7 +281,8 @@ const EditProfile = () => {
                 placeholderTextColor={dark ? COLORS.grayTie : COLORS.black}
                 selectionColor="#111"
                 keyboardType="numeric"
-              />
+              autoCapitalize="none"
+          />
             </View>
             <View>
               <RNPickerSelect
@@ -294,23 +295,23 @@ const EditProfile = () => {
                     fontSize: 16,
                     paddingHorizontal: 10,
                     borderRadius: 4,
-                    color: COLORS.greyscale600,
+                    color: COLORS.grayscale600,
                     paddingRight: 30,
                     height: 52,
                     width: SIZES.width - 32,
                     alignItems: 'center',
-                    backgroundColor: dark ? COLORS.dark2 : COLORS.greyscale500,
+                    backgroundColor: dark ? COLORS.dark2 : COLORS.grayscale500,
                   },
                   inputAndroid: {
                     fontSize: 16,
                     paddingHorizontal: 10,
                     borderRadius: 8,
-                    color: COLORS.greyscale600,
+                    color: COLORS.grayscale600,
                     paddingRight: 30,
                     height: 52,
                     width: SIZES.width - 32,
                     alignItems: 'center',
-                    backgroundColor: dark ? COLORS.dark2 : COLORS.greyscale500,
+                    backgroundColor: dark ? COLORS.dark2 : COLORS.grayscale500,
                   },
                 }}
               />
@@ -380,14 +381,14 @@ const styles = StyleSheet.create({
   },
   inputContainer: {
     flexDirection: "row",
-    borderColor: COLORS.greyscale500,
+    borderColor: COLORS.grayscale500,
     borderWidth: .4,
     borderRadius: 6,
     height: 52,
     width: SIZES.width - 32,
     alignItems: 'center',
     marginVertical: 16,
-    backgroundColor: COLORS.greyscale500,
+    backgroundColor: COLORS.grayscale500,
   },
   downIcon: {
     width: 10,
@@ -414,13 +415,13 @@ const styles = StyleSheet.create({
   inputBtn: {
     borderWidth: 1,
     borderRadius: 12,
-    borderColor: COLORS.greyscale500,
+    borderColor: COLORS.grayscale500,
     height: 50,
     paddingLeft: 8,
     fontSize: 18,
     justifyContent: "space-between",
     marginTop: 4,
-    backgroundColor: COLORS.greyscale500,
+    backgroundColor: COLORS.grayscale500,
     flexDirection: "row",
     alignItems: "center",
     paddingRight: 8
@@ -447,14 +448,14 @@ const styles = StyleSheet.create({
   },
   genderContainer: {
     flexDirection: "row",
-    borderColor: COLORS.greyscale500,
+    borderColor: COLORS.grayscale500,
     borderWidth: .4,
     borderRadius: 6,
     height: 58,
     width: SIZES.width - 32,
     alignItems: 'center',
     marginVertical: 16,
-    backgroundColor: COLORS.greyscale500,
+    backgroundColor: COLORS.grayscale500,
   }
 });
 
@@ -462,23 +463,23 @@ const pickerSelectStyles = StyleSheet.create({
   inputIOS: {
     fontSize: 16,
     paddingHorizontal: 10,
-    color: COLORS.greyscale600,
+    color: COLORS.grayscale600,
     paddingRight: 30,
     height: 58,
     width: SIZES.width - 32,
     alignItems: 'center',
-    backgroundColor: COLORS.greyscale500,
+    backgroundColor: COLORS.grayscale500,
     borderRadius: 16
   },
   inputAndroid: {
     fontSize: 16,
     paddingHorizontal: 10,
-    color: COLORS.greyscale600,
+    color: COLORS.grayscale600,
     paddingRight: 30,
     height: 58,
     width: SIZES.width - 32,
     alignItems: 'center',
-    backgroundColor: COLORS.greyscale500,
+    backgroundColor: COLORS.grayscale500,
     borderRadius: 16
   },
 });

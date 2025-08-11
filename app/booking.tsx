@@ -3,7 +3,7 @@ import { View, Text, StyleSheet, Image, TextInput } from 'react-native';
 import { COLORS, SIZES, icons } from '../constants';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import Header from '../components/Header';
-import { ScrollView } from 'react-native-virtualized-view';
+import { ScrollView } from 'react-native';
 import { Calendar, DateData } from 'react-native-calendars';
 import Button from '../components/Button';
 import { useTheme } from '../theme/ThemeProvider';
@@ -178,6 +178,7 @@ const Booking: React.FC<BookingProps> = () => {
               color: dark ? COLORS.secondaryWhite : COLORS.black
             }]}
             multiline={true}
+            autoCapitalize="none"
           />
         </ScrollView>
         <Button

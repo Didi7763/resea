@@ -2,7 +2,7 @@ import { View, Text, StyleSheet, Modal, TouchableWithoutFeedback, Image, ImageSo
 import React, { useState } from 'react';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import Header from '../components/Header';
-import { ScrollView } from "react-native-virtualized-view";
+import { ScrollView } from 'react-native';
 import { COLORS, SIZES, icons, illustrations } from '../constants';
 import { OtpInput } from "react-native-otp-entry";
 import Button from "../components/Button";

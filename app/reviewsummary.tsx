@@ -3,7 +3,7 @@ import React, { useState } from 'react';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { COLORS, SIZES, icons, illustrations } from '../constants';
 import Header from '../components/Header';
-import { ScrollView } from 'react-native-virtualized-view';
+import { ScrollView } from 'react-native';
 import Button from '../components/Button';
 import { useTheme } from '../theme/ThemeProvider';
 import { NavigationProp } from '@react-navigation/native';
@@ -134,7 +134,7 @@ const ReviewSummary = () => {
                             <Text style={[styles.viewRight, { color: dark ? COLORS.white : COLORS.greyscale900 }]}>{formatCFA(3500)}</Text>
                         </View>
                         <View style={[styles.separateLine, {
-                            backgroundColor: dark ? COLORS.greyScale800 : COLORS.grayscale200
+                            backgroundColor: dark ? COLORS.greyscale800 : COLORS.grayscale200
                         }]} />
                         <View style={styles.view}>
                             <Text style={styles.viewLeft}>Total</Text>
@@ -228,7 +228,7 @@ const styles = StyleSheet.create({
     premiumText: {
         fontSize: 16,
         fontFamily: "medium",
-        color: COLORS.greyScale800,
+        color: COLORS.greyscale800,
         marginLeft: 24
     },
     summaryContainer: {

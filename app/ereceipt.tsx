@@ -2,7 +2,7 @@ import { View, Text, StyleSheet, TouchableOpacity, Image, Alert, Modal, Touchabl
 import React, { useState } from 'react';
 import { COLORS, SIZES, icons } from '../constants';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { ScrollView } from 'react-native-virtualized-view';
+import { ScrollView } from 'react-native';
 import Barcode from '@kichiyaki/react-native-barcode-generator';
 import { MaterialCommunityIcons } from "@expo/vector-icons";
 import * as Clipboard from 'expo-clipboard';

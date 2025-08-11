@@ -1,14 +1,12 @@
-import { View, Text, StyleSheet, Image, TouchableOpacity, TextInput, FlatList, NativeScrollEvent, ImageSourcePropType } from 'react-native';
+import { View, Text, StyleSheet, Image, TouchableOpacity, TextInput, FlatList, NativeScrollEvent, ImageSourcePropType, ScrollView } from 'react-native';
 import React, { useState } from 'react';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { ScrollView } from 'react-native-virtualized-view';
 import { banners, category, featuredEstates, recommendedEstates } from '@/data';
 import SectionHeader from '@/components/SectionHeader';
 import FeaturedEstateCard from '@/components/FeaturedEstateCard';
 import VerticalEstateCard from '@/components/VerticalEstateCard';
 import { useTheme } from '@/theme/ThemeProvider';
 import { COLORS, icons, images, SIZES } from '@/constants';
-import { NavigationProp } from '@react-navigation/native';
 import { useNavigation } from 'expo-router';
 
 interface BannerItem {
@@ -41,7 +39,7 @@ interface HomeProps {
 }
 
 const Home: React.FC<HomeProps> = () => {
-  const navigation = useNavigation<NavigationProp<any>>();
+  const navigation = useNavigation<any>();
   const [currentIndex, setCurrentIndex] = useState<number>(0);
   const { dark, colors } = useTheme();
   const [selectedCategories, setSelectedCategories] = useState<string[]>(["1"]);
@@ -100,6 +98,7 @@ const Home: React.FC<HomeProps> = () => {
         placeholderTextColor={COLORS.gray}
         style={styles.searchInput}
         onFocus={handleInputFocus}
+        autoCapitalize="none"
       />
       <TouchableOpacity>
         <Image
@@ -269,12 +268,12 @@ const Home: React.FC<HomeProps> = () => {
     <SafeAreaView style={[styles.area, { backgroundColor: colors.background }]}>
       <View style={[styles.container, { backgroundColor: colors.background }]}>
         {renderHeader()}
-        <ScrollView showsVerticalScrollIndicator={false}>
+        <View style={{ flex: 1 }}>
           {renderSearchBar()}
           {renderBanner()}
           {renderFeaturedEstates()}
           {renderOurRecommendationEstates()}
-        </ScrollView>
+        </View>
       </View>
     </SafeAreaView>
   );

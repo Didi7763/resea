@@ -2,7 +2,7 @@ import { View, Text, StyleSheet, TouchableOpacity, Image, Alert, Modal, Touchabl
 import React, { useState } from 'react';
 import { COLORS, SIZES, icons } from '../constants';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { ScrollView } from 'react-native-virtualized-view';
+import { ScrollView } from 'react-native';
 import Barcode from '@kichiyaki/react-native-barcode-generator';
 import { MaterialCommunityIcons } from "@expo/vector-icons";
 import * as Clipboard from 'expo-clipboard';
@@ -116,7 +116,7 @@ const TopupEReceipt = () => {
                 }]}>
                     <View style={styles.viewContainer}>
                         <Text style={[styles.viewLeft, {
-                            color: dark ? COLORS.greyscale300 : "gray"
+                            color: dark ? COLORS.grayscale300 : "gray"
                         }]}>Name</Text>
                         <Text style={[styles.viewRight, {
                             color: dark ? COLORS.white : COLORS.black
@@ -124,7 +124,7 @@ const TopupEReceipt = () => {
                     </View>
                     <View style={styles.viewContainer}>
                         <Text style={[styles.viewLeft, {
-                            color: dark ? COLORS.greyscale300 : "gray"
+                            color: dark ? COLORS.grayscale300 : "gray"
                         }]}>Address</Text>
                         <Text style={[styles.viewRight, {
                             color: dark ? COLORS.white : COLORS.black
@@ -132,7 +132,7 @@ const TopupEReceipt = () => {
                     </View>
                     <View style={styles.viewContainer}>
                         <Text style={[styles.viewLeft, {
-                            color: dark ? COLORS.greyscale300 : "gray"
+                            color: dark ? COLORS.grayscale300 : "gray"
                         }]}>Email</Text>
                         <Text style={[styles.viewRight, {
                             color: dark ? COLORS.white : COLORS.black
@@ -140,7 +140,7 @@ const TopupEReceipt = () => {
                     </View>
                     <View style={styles.viewContainer}>
                         <Text style={[styles.viewLeft, {
-                            color: dark ? COLORS.greyscale300 : "gray"
+                            color: dark ? COLORS.grayscale300 : "gray"
                         }]}>Phone</Text>
                         <Text style={[styles.viewRight, {
                             color: dark ? COLORS.white : COLORS.black
@@ -148,7 +148,7 @@ const TopupEReceipt = () => {
                     </View>
                     <View style={styles.viewContainer}>
                         <Text style={[styles.viewLeft, {
-                            color: dark ? COLORS.greyscale300 : "gray"
+                            color: dark ? COLORS.grayscale300 : "gray"
                         }]}>Category</Text>
                         <Text style={[styles.viewRight, {
                             color: dark ? COLORS.white : COLORS.black
@@ -156,7 +156,7 @@ const TopupEReceipt = () => {
                     </View>
                     <View style={styles.viewContainer}>
                         <Text style={[styles.viewLeft, {
-                            color: dark ? COLORS.greyscale300 : "gray"
+                            color: dark ? COLORS.grayscale300 : "gray"
                         }]}>ID</Text>
                         <Text style={[styles.viewRight, {
                             color: dark ? COLORS.white : COLORS.black
@@ -170,7 +170,7 @@ const TopupEReceipt = () => {
                 }]}>
                     <View style={styles.viewContainer}>
                         <Text style={[styles.viewLeft, {
-                            color: dark ? COLORS.greyscale300 : "gray"
+                            color: dark ? COLORS.grayscale300 : "gray"
                         }]}>Amount</Text>
                         <Text style={[styles.viewRight, {
                             color: dark ? COLORS.white : COLORS.black
@@ -178,7 +178,7 @@ const TopupEReceipt = () => {
                     </View>
                     <View style={styles.viewContainer}>
                         <Text style={[styles.viewLeft, {
-                            color: dark ? COLORS.greyscale300 : "gray"
+                            color: dark ? COLORS.grayscale300 : "gray"
                         }]}>Tax</Text>
                         <Text style={[styles.viewRight, {
                             color: dark ? COLORS.white : COLORS.black
@@ -186,7 +186,7 @@ const TopupEReceipt = () => {
                     </View>
                     <View style={styles.viewContainer}>
                         <Text style={[styles.viewLeft, {
-                            color: dark ? COLORS.greyscale300 : "gray"
+                            color: dark ? COLORS.grayscale300 : "gray"
                         }]}>Country</Text>
                         <Text style={[styles.viewRight, {
                             color: dark ? COLORS.white : COLORS.black
@@ -199,7 +199,7 @@ const TopupEReceipt = () => {
                 }]}>
                     <View style={styles.viewContainer}>
                         <Text style={[styles.viewLeft, {
-                            color: dark ? COLORS.greyscale300 : "gray"
+                            color: dark ? COLORS.grayscale300 : "gray"
                         }]}>Total</Text>
                         <Text style={[styles.viewRight, {
                             color: dark ? COLORS.white : COLORS.black
@@ -207,7 +207,7 @@ const TopupEReceipt = () => {
                     </View>
                     <View style={styles.viewContainer}>
                         <Text style={[styles.viewLeft, {
-                            color: dark ? COLORS.greyscale300 : "gray"
+                            color: dark ? COLORS.grayscale300 : "gray"
                         }]}>Payment Methods</Text>
                         <Text style={[styles.viewRight, {
                             color: dark ? COLORS.white : COLORS.black
@@ -215,7 +215,7 @@ const TopupEReceipt = () => {
                     </View>
                     <View style={styles.viewContainer}>
                         <Text style={[styles.viewLeft, {
-                            color: dark ? COLORS.greyscale300 : "gray"
+                            color: dark ? COLORS.grayscale300 : "gray"
                         }]}>Date</Text>
                         <Text style={[styles.viewRight, {
                             color: dark ? COLORS.white : COLORS.black
@@ -223,7 +223,7 @@ const TopupEReceipt = () => {
                     </View>
                     <View style={styles.viewContainer}>
                         <Text style={[styles.viewLeft, {
-                            color: dark ? COLORS.greyscale300 : "gray"
+                            color: dark ? COLORS.grayscale300 : "gray"
                         }]}>Transaction ID</Text>
                         <View style={styles.copyContentContainer}>
                             <Text style={styles.viewRight}>{transactionId}</Text>
@@ -234,7 +234,7 @@ const TopupEReceipt = () => {
                     </View>
                     <View style={styles.viewContainer}>
                         <Text style={[styles.viewLeft, {
-                            color: dark ? COLORS.greyscale300 : "gray"
+                            color: dark ? COLORS.grayscale300 : "gray"
                         }]}>Status</Text>
                         <TouchableOpacity style={[styles.statusBtn, {
                             backgroundColor: dark ? COLORS.dark3 : COLORS.tansparentPrimary,

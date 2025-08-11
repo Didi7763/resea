@@ -3,7 +3,7 @@ import React, { useState } from 'react';
 import { COLORS } from '../constants';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { StatusBar } from 'expo-status-bar';
-import { ScrollView } from 'react-native-virtualized-view';
+import { ScrollView } from 'react-native';
 import Header from '../components/Header';
 import { useTheme } from '../theme/ThemeProvider';
 import GlobalSettingsItem from '@/components/GlobalSettingsItem';

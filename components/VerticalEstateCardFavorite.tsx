@@ -52,7 +52,7 @@ const VerticalEstateCardFavorite: React.FC<VerticalEstateCardFavoriteProps> = ({
       <Text
         style={[
           styles.location,
-          { color: dark ? COLORS.greyscale300 : COLORS.grayscale700 }
+          { color: dark ? COLORS.grayscale300 : COLORS.grayscale700 }
         ]}
       >
         {location}
@@ -63,7 +63,7 @@ const VerticalEstateCardFavorite: React.FC<VerticalEstateCardFavoriteProps> = ({
           <Text
             style={[
               styles.durationText,
-              { color: dark ? COLORS.greyscale300 : COLORS.grayscale700 }
+              { color: dark ? COLORS.grayscale300 : COLORS.grayscale700 }
             ]}
           >
             / night

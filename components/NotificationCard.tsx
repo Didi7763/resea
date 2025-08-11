@@ -89,7 +89,7 @@ const NotificationCard: React.FC<NotificationCardProps> = ({
               color: dark ? COLORS.white : COLORS.greyscale900,
             }]}>{title}</Text>
             <Text style={[styles.date, {
-              color: dark ? COLORS.greyscale500 : COLORS.grayscale700
+              color: dark ? COLORS.grayscale500 : COLORS.grayscale700
             }]}>{getTimeAgo(date)} | {time}</Text>
           </View>
         </View>

@@ -4,7 +4,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { COLORS, icons } from '@/constants';
 import { useTheme } from '@/theme/ThemeProvider';
 import { NavigationProp } from '@react-navigation/native';
-import { ScrollView } from 'react-native-virtualized-view';
+import { ScrollView } from 'react-native';
 import { notifications } from '@/data';
 import NotificationCard from '@/components/NotificationCard';
 import { useNavigation } from 'expo-router';
@@ -48,7 +48,7 @@ const Notifications = () => {
         <SafeAreaView style={[styles.area, { backgroundColor: colors.background }]}>
             <View style={[styles.container, { backgroundColor: colors.background }]}>
                 {renderHeader()}
-                <ScrollView showsVerticalScrollIndicator={false}>
+                <View showsVerticalScrollIndicator={false}>
                     <FlatList
                         data={notifications}
                         keyExtractor={item => item.id}
@@ -63,7 +63,7 @@ const Notifications = () => {
                             />
                         )}
                     />
-                </ScrollView>
+                </View>
             </View>
         </SafeAreaView>
     )

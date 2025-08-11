@@ -55,12 +55,12 @@ const HorizontalEstateCard: React.FC<HorizontalEstateCardProps> = ({
                 </View>
                 <View style={styles.bottomViewContainer}>
                     <Text style={[styles.location, {
-                        color: dark ? COLORS.greyscale300 : COLORS.grayscale700
+                        color: dark ? COLORS.grayscale300 : COLORS.grayscale700
                     }]}>{location}</Text>
                     <View style={styles.priceContainer}>
                         <Text style={styles.price}>{formatCFA(price)}</Text>
                         <Text style={[styles.durationText, {
-                            color: dark ? COLORS.greyscale300 : COLORS.grayscale700
+                            color: dark ? COLORS.grayscale300 : COLORS.grayscale700
                         }]}> / nuit</Text>
                     </View>
                 </View>

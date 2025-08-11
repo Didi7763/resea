@@ -3,7 +3,7 @@ import React from 'react';
 import { COLORS, SIZES, icons } from '../constants';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useTheme } from '../theme/ThemeProvider';
-import { ScrollView } from 'react-native-virtualized-view';
+import { ScrollView } from 'react-native';
 import { gallery } from '../data';
 import { NavigationProp } from '@react-navigation/native';
 import { useNavigation } from 'expo-router';

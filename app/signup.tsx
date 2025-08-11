@@ -8,10 +8,10 @@ import {
   KeyboardAvoidingView,
   Platform,
   Animated,
-  TextInput
+  TextInput,
+  ScrollView
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { ScrollView } from 'react-native-virtualized-view';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
 import { Checkbox } from 'expo-checkbox';
@@ -82,20 +82,37 @@ const Signup = () => {
   const shakeAnimation = useRef(new Animated.Value(0)).current;
 
   useEffect(() => {
-    // Start entrance animations
-    Animated.parallel([
-      Animated.timing(fadeAnimation, {
-        toValue: 1,
-        duration: 800,
-        useNativeDriver: true,
-      }),
-      Animated.timing(slideAnimation, {
-        toValue: 0,
-        duration: 600,
-        useNativeDriver: true,
-      }),
-    ]).start();
-  }, [fadeAnimation, slideAnimation]);
+  // Start entrance animations
+  Animated.parallel([
+    Animated.timing(fadeAnimation, {
+      toValue: 1,
+      duration: 800,
+      useNativeDriver: true,
+    }),
+    Animated.timing(slideAnimation, {
+      toValue: 0,
+      duration: 600,
+      useNativeDriver: true,
+    }),
+  ]).start();
+
+  // Nettoyer les champs au montage du composant
+  dispatchFormState({
+    inputId: 'fullName',
+    validationResult: undefined,
+    inputValue: '',
+  });
+  dispatchFormState({
+    inputId: 'email',
+    validationResult: undefined,
+    inputValue: '',
+  });
+  dispatchFormState({
+    inputId: 'phoneNumber',
+    validationResult: undefined,
+    inputValue: '',
+  });
+}, [fadeAnimation, slideAnimation]);
 
   // Resend timer effect
   useEffect(() => {

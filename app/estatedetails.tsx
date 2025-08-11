@@ -3,7 +3,7 @@ import React, { useRef, useState } from 'react';
 import { useTheme } from '../theme/ThemeProvider';
 import { COLORS, FONTS, SIZES, icons, images, socials } from '../constants';
 import { StatusBar } from 'expo-status-bar';
-import { ScrollView } from 'react-native-virtualized-view';
+import { ScrollView } from 'react-native';
 import { FontAwesome } from "@expo/vector-icons";
 import { estateFacilties } from '../data';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -138,7 +138,7 @@ const EstateDetails = () => {
                     </View>
                 </View>
                 <View style={[styles.separateLine, {
-                    backgroundColor: dark ? COLORS.greyScale800 : COLORS.grayscale200,
+                    backgroundColor: dark ? COLORS.greyscale800 : COLORS.grayscale200,
                 }]} />
 
                 <View style={styles.userInfoContainer}>

@@ -5,7 +5,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { TabView, SceneMap, TabBar } from 'react-native-tab-view';
 import { faqKeywords, faqs } from '../data';
 import { useTheme } from '../theme/ThemeProvider';
-import { ScrollView } from 'react-native-virtualized-view';
+import { ScrollView } from 'react-native';
 import { NavigationProp } from '@react-navigation/native';
 import HelpCenterItem from '@/components/HelpCenterItem';
 import { useNavigation } from 'expo-router';
@@ -111,7 +111,7 @@ const faqsRoute = () => {
                             styles.searchIcon,
                             {
                                 tintColor: dark
-                                    ? COLORS.greyscale600
+                                    ? COLORS.grayscale600
                                     : COLORS.grayscale400,
                             },
                         ]}
@@ -122,14 +122,14 @@ const faqsRoute = () => {
                         styles.input,
                         {
                             color: dark
-                                ? COLORS.greyscale300
+                                ? COLORS.grayscale300
                                 : COLORS.grayscale400,
                         },
                     ]}
                     placeholder="Search"
-                    placeholderTextColor={dark ? COLORS.greyscale600 : COLORS.grayscale400}
+                    placeholderTextColor={dark ? COLORS.grayscale600 : COLORS.grayscale400}
                     value={searchText}
-                    onChangeText={(text) => setSearchText(text)}
+                    onChangeText={(text) = autoCapitalize="none"> setSearchText(text)}
                 />
             </View>
             <ScrollView

@@ -2,7 +2,7 @@ import { View, Text, StyleSheet, TouchableOpacity, Image, TextInput, FlatList } 
 import React, { useEffect, useRef, useState } from 'react';
 import { COLORS, SIZES, icons } from '../constants';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { ScrollView } from 'react-native-virtualized-view';
+import { ScrollView } from 'react-native';
 import { allEstates, category, facilities, ratings } from '../data';
 import RBSheet from "react-native-raw-bottom-sheet";
 import Button from '../components/Button';
@@ -151,7 +151,7 @@ const Search = () => {
                             color: dark ? COLORS.white : COLORS.greyscale900
                         }]}
                         value={searchQuery}
-                        onChangeText={(text) => setSearchQuery(text)}
+                        onChangeText={(text) = autoCapitalize="none"> setSearchQuery(text)}
                     />
                     <TouchableOpacity
                         onPress={() => refRBSheet.current.open()}>
@@ -197,7 +197,7 @@ const Search = () => {
                 {/* Results container  */}
                 <View>
                     {/* Estates result list */}
-                    <ScrollView
+                    <View
                         showsVerticalScrollIndicator={false}
                         style={{
                             backgroundColor: dark ? COLORS.dark1 : COLORS.secondaryWhite,
@@ -249,7 +249,7 @@ const Search = () => {
                         ) : (
                             <NotFoundCard />
                         )}
-                    </ScrollView>
+                    </View>
                 </View>
             </View>
         )
@@ -621,7 +621,7 @@ const styles = StyleSheet.create({
     separateLine: {
         height: .4,
         width: SIZES.width - 32,
-        backgroundColor: COLORS.greyscale300,
+        backgroundColor: COLORS.grayscale300,
         marginVertical: 12
     },
     sheetTitle: {

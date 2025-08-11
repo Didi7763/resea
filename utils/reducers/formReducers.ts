@@ -1,9 +1,10 @@
 export const reducer = (state: any, action: any) => {
     const { validationResult, inputId, inputValue } = action;
 
+    // Utiliser la valeur directement sans la nettoyer automatiquement
     const updatedValues = {
         ...state.inputValues,
-        [inputId]: inputValue,
+        [inputId]: inputValue || '', // Garder la valeur telle qu'elle est saisie
     };
 
     const updatedValidities = {

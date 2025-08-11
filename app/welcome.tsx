@@ -7,9 +7,11 @@ import {
   Image,
   Dimensions,
   Animated,
-  StatusBar
+  StatusBar,
+  ScrollView  // CHANGÉ: Import du ScrollView standard
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+// SUPPRIMÉ: import ScrollView from react-native-virtualized-view
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
@@ -80,142 +82,144 @@ const Welcome = () => {
         ]}
         style={styles.container}
       >
-        {/* Top Section - Illustration */}
-        <Animated.View
-          style={[
-            styles.illustrationContainer,
-            {
-              opacity: fadeAnimation,
-              transform: [
-                { translateY: slideAnimation },
-                { scale: scaleAnimation }
-              ]
-            }
-          ]}
+        {/* ScrollView STANDARD - PAS DE GESTURE HANDLER */}
+        <ScrollView 
+          contentContainerStyle={styles.scrollContent}
+          showsVerticalScrollIndicator={false}
+          bounces={true}
         >
-          <Image
-            source={dark ? illustrations.welcomeDark : illustrations.welcome}
-            resizeMode="contain"
-            style={styles.illustration}
-          />
-          
-          {/* Floating elements for visual appeal */}
-          <View style={[styles.floatingElement, styles.element1]} />
-          <View style={[styles.floatingElement, styles.element2]} />
-          <View style={[styles.floatingElement, styles.element3]} />
-        </Animated.View>
-
-        {/* Content Section */}
-        <Animated.View
-          style={[
-            styles.contentContainer,
-            { opacity: fadeAnimation, transform: [{ translateY: slideAnimation }] }
-          ]}
-        >
-          {/* Title */}
-          <View style={styles.titleContainer}>
-            <Text style={[styles.title, { color: colors.text }]}>
-              Connectez-vous
-            </Text>
-            <Text style={[styles.subtitle, { color: dark ? COLORS.grayscale400 : COLORS.grayscale700 }]}>
-              Accédez à votre compte REASA et découvrez les meilleures propriétés
-            </Text>
-          </View>
-
-          {/* Social Login Options */}
-          <View style={styles.socialContainer}>
-            <SocialButtonV2
-              title="Continuer avec Google"
-              icon={icons.google}
-              onPress={() => handleSocialLogin('Google')}
+          {/* Top Section - Illustration */}
+          <Animated.View
+            style={[
+              styles.illustrationContainer,
+              {
+                opacity: fadeAnimation,
+                transform: [
+                  { translateY: slideAnimation },
+                  { scale: scaleAnimation }
+                ]
+              }
+            ]}
+          >
+            <Image
+              source={dark ? illustrations.welcomeDark : illustrations.welcome}
+              resizeMode="contain"
+              style={styles.illustration}
             />
-            <SocialButtonV2
-              title="Continuer avec Facebook"
-              icon={icons.facebook}
-              onPress={() => handleSocialLogin('Facebook')}
-            />
-            <SocialButtonV2
-              title="Continuer avec Apple"
-              icon={icons.appleLogo}
-              onPress={() => handleSocialLogin('Apple')}
-              iconStyles={{ tintColor: dark ? COLORS.white : COLORS.black }}
-            />
-          </View>
+            
+            {/* Floating elements for visual appeal */}
+            <View style={[styles.floatingElement, styles.element1]} />
+            <View style={[styles.floatingElement, styles.element2]} />
+            <View style={[styles.floatingElement, styles.element3]} />
+          </Animated.View>
 
-          {/* Divider */}
-          <View style={styles.dividerContainer}>
-            <View style={[styles.dividerLine, { backgroundColor: dark ? COLORS.greyScale800 : COLORS.grayscale200 }]} />
-            <Text style={[styles.dividerText, { color: dark ? COLORS.white : COLORS.grayscale700 }]}>
-              Ou
-            </Text>
-            <View style={[styles.dividerLine, { backgroundColor: dark ? COLORS.greyScale800 : COLORS.grayscale200 }]} />
-          </View>
+          {/* Content Section */}
+          <Animated.View
+            style={[
+              styles.contentContainer,
+              { opacity: fadeAnimation, transform: [{ translateY: slideAnimation }] }
+            ]}
+          >
+            {/* Title */}
+            <View style={styles.titleContainer}>
+              <Text style={[styles.title, { color: colors.text }]}>
+                Connectez-vous
+              </Text>
+              <Text style={[styles.subtitle, { color: dark ? COLORS.grayscale400 : COLORS.grayscale700 }]}>
+                Accédez à votre compte REASA et découvrez les meilleures propriétés
+              </Text>
+            </View>
 
-          {/* Phone Login Button - Modifié pour retirer l'icône */}
-          <View style={styles.phoneButtonContainer}>
-            <Button
-              title="Se connecter avec un numéro"
-              filled
-              onPress={handlePhoneLogin}
-              style={styles.phoneButton}
-            />
-            <View style={styles.phoneIconOverlay}>
-              <Ionicons
-                name="call-outline"
-                size={20}
-                color={COLORS.white}
+            {/* Social Login Options */}
+            <View style={styles.socialContainer}>
+              <SocialButtonV2
+                title="Continuer avec Google"
+                icon={icons.google}
+                onPress={() => handleSocialLogin('Google')}
+              />
+              <SocialButtonV2
+                title="Continuer avec Facebook"
+                icon={icons.facebook}
+                onPress={() => handleSocialLogin('Facebook')}
+              />
+              <SocialButtonV2
+                title="Continuer avec Apple"
+                icon={icons.appleLogo}
+                onPress={() => handleSocialLogin('Apple')}
+                iconStyles={{ tintColor: dark ? COLORS.white : COLORS.black }}
               />
             </View>
-          </View>
 
-          {/* Quick Features */}
-          <View style={styles.featuresContainer}>
-            <Text style={[styles.featuresTitle, { color: colors.text }]}>
-              Pourquoi choisir REASA ?
-            </Text>
-            <View style={styles.featuresList}>
-              <View style={styles.featureItem}>
-                <View style={styles.featureIcon}>
-                  <Ionicons name="home" size={16} color={COLORS.primary} />
-                </View>
-                <Text style={[styles.featureText, { color: dark ? COLORS.grayscale400 : COLORS.grayscale700 }]}>
-                  Plus de 10,000 propriétés
-                </Text>
-              </View>
-              <View style={styles.featureItem}>
-                <View style={styles.featureIcon}>
-                  <Ionicons name="shield-checkmark" size={16} color={COLORS.primary} />
-                </View>
-                <Text style={[styles.featureText, { color: dark ? COLORS.grayscale400 : COLORS.grayscale700 }]}>
-                  Transactions sécurisées
-                </Text>
-              </View>
-              <View style={styles.featureItem}>
-                <View style={styles.featureIcon}>
-                  <Ionicons name="people" size={16} color={COLORS.primary} />
-                </View>
-                <Text style={[styles.featureText, { color: dark ? COLORS.grayscale400 : COLORS.grayscale700 }]}>
-                  Support 24/7
-                </Text>
+            {/* Divider */}
+            <View style={styles.dividerContainer}>
+              <View style={[styles.dividerLine, { backgroundColor: dark ? COLORS.greyscale800 : COLORS.grayscale200 }]} />
+              <Text style={[styles.dividerText, { color: dark ? COLORS.white : COLORS.grayscale700 }]}>
+                Ou
+              </Text>
+              <View style={[styles.dividerLine, { backgroundColor: dark ? COLORS.greyscale800 : COLORS.grayscale200 }]} />
+            </View>
+
+            {/* Phone Login Button */}
+            <View style={styles.phoneButtonContainer}>
+              <Button
+                title="Se connecter avec un numéro"
+                filled
+                onPress={handlePhoneLogin}
+                style={styles.phoneButton}
+              />
+              <View style={styles.phoneIconOverlay}>
+                <Ionicons
+                  name="call-outline"
+                  size={20}
+                  color={COLORS.white}
+                />
               </View>
             </View>
-          </View>
-        </Animated.View>
 
-        {/* Bottom Section */}
-        <Animated.View
-          style={[
-            styles.bottomContainer,
-            { opacity: fadeAnimation }
-          ]}
-        >
-          <Text style={[styles.bottomText, { color: dark ? COLORS.grayscale400 : COLORS.grayscale700 }]}>
-            Vous n&apos;avez pas de compte ?{' '}
-          </Text>
-          <TouchableOpacity onPress={handleSignup}>
-            <Text style={styles.signupText}>S&apos;inscrire</Text>
-          </TouchableOpacity>
-        </Animated.View>
+            {/* Quick Features */}
+            <View style={styles.featuresContainer}>
+              <Text style={[styles.featuresTitle, { color: colors.text }]}>
+                Pourquoi choisir REASA ?
+              </Text>
+              <View style={styles.featuresList}>
+                <View style={styles.featureItem}>
+                  <View style={styles.featureIcon}>
+                    <Ionicons name="home" size={16} color={COLORS.primary} />
+                  </View>
+                  <Text style={[styles.featureText, { color: dark ? COLORS.grayscale400 : COLORS.grayscale700 }]}>
+                    Plus de 10,000 propriétés
+                  </Text>
+                </View>
+                <View style={styles.featureItem}>
+                  <View style={styles.featureIcon}>
+                    <Ionicons name="shield-checkmark" size={16} color={COLORS.primary} />
+                  </View>
+                  <Text style={[styles.featureText, { color: dark ? COLORS.grayscale400 : COLORS.grayscale700 }]}>
+                    Transactions sécurisées
+                  </Text>
+                </View>
+                <View style={styles.featureItem}>
+                  <View style={styles.featureIcon}>
+                    <Ionicons name="people" size={16} color={COLORS.primary} />
+                  </View>
+                  <Text style={[styles.featureText, { color: dark ? COLORS.grayscale400 : COLORS.grayscale700 }]}>
+                    Support 24/7
+                  </Text>
+                </View>
+              </View>
+            </View>
+
+            {/* Bottom Section */}
+            <View style={styles.bottomContainer}>
+              <Text style={[styles.bottomText, { color: dark ? COLORS.grayscale400 : COLORS.grayscale700 }]}>
+                Vous n&apos;avez pas de compte ?{' '}
+              </Text>
+              <TouchableOpacity onPress={handleSignup}>
+                <Text style={styles.signupText}>S&apos;inscrire</Text>
+              </TouchableOpacity>
+            </View>
+          </Animated.View>
+        </ScrollView>
 
         {/* Decorative Background Elements */}
         <View style={[styles.backgroundElement, styles.bgElement1, { backgroundColor: COLORS.primary + '10' }]} />
@@ -231,18 +235,22 @@ const styles = StyleSheet.create({
   },
   container: {
     flex: 1,
+  },
+  scrollContent: {
+    flexGrow: 1,
     paddingHorizontal: 16,
+    paddingBottom: 30,
   },
   illustrationContainer: {
-    flex: 0.4,
     alignItems: 'center',
     justifyContent: 'center',
     position: 'relative',
     marginTop: 40,
+    marginBottom: 20,
   },
   illustration: {
     width: width * 0.8,
-    height: 250,
+    height: 200,
     maxWidth: 320,
   },
   floatingElement: {
@@ -272,15 +280,14 @@ const styles = StyleSheet.create({
     right: 50,
   },
   contentContainer: {
-    flex: 0.6,
-    justifyContent: 'space-between',
+    flex: 1,
   },
   titleContainer: {
     alignItems: 'center',
     marginBottom: 32,
   },
   title: {
-    fontSize: 32,
+    fontSize: 28,
     fontFamily: 'bold',
     textAlign: 'center',
     marginBottom: 12,
@@ -315,7 +322,7 @@ const styles = StyleSheet.create({
   },
   phoneButton: {
     borderRadius: 30,
-    paddingLeft: 50, // Espace pour l'icône
+    paddingLeft: 50,
   },
   phoneIconOverlay: {
     position: 'absolute',
@@ -326,7 +333,7 @@ const styles = StyleSheet.create({
   },
   featuresContainer: {
     alignItems: 'center',
-    marginBottom: 20,
+    marginBottom: 32,
   },
   featuresTitle: {
     fontSize: 18,
@@ -360,7 +367,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    paddingBottom: 20,
+    paddingTop: 20,
   },
   bottomText: {
     fontSize: 14,

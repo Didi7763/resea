@@ -69,7 +69,7 @@ const ChangeEmail = () => {
                             />
                             <Text style={styles.modalTitle}>Congratulations!</Text>
                             <Text style={[styles.modalSubtitle, {
-                                color: dark ? COLORS.greyscale300 : COLORS.greyscale600
+                                color: dark ? COLORS.grayscale300 : COLORS.grayscale600
                             }]}>Your account is ready to use. You will be redirected to the Home page in a few seconds..</Text>
                             <Button
                                 title="Continue"
@@ -252,7 +252,7 @@ const styles = StyleSheet.create({
     modalSubtitle: {
         fontSize: 16,
         fontFamily: "regular",
-        color: COLORS.greyscale600,
+        color: COLORS.grayscale600,
         textAlign: "center",
         marginVertical: 12
     },

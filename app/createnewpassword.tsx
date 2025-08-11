@@ -8,10 +8,10 @@ import {
   Alert,
   KeyboardAvoidingView,
   Platform,
-  Animated
+  Animated,
+  ScrollView
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { ScrollView } from 'react-native-virtualized-view';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
@@ -61,20 +61,32 @@ const CreateNewPassword = () => {
   const slideAnimation = React.useRef(new Animated.Value(50)).current;
 
   useEffect(() => {
-    // Start animations
-    Animated.parallel([
-      Animated.timing(fadeAnimation, {
-        toValue: 1,
-        duration: 800,
-        useNativeDriver: true,
-      }),
-      Animated.timing(slideAnimation, {
-        toValue: 0,
-        duration: 600,
-        useNativeDriver: true,
-      }),
-    ]).start();
-  }, [fadeAnimation, slideAnimation]);
+  // Start animations
+  Animated.parallel([
+    Animated.timing(fadeAnimation, {
+      toValue: 1,
+      duration: 800,
+      useNativeDriver: true,
+    }),
+    Animated.timing(slideAnimation, {
+      toValue: 0,
+      duration: 600,
+      useNativeDriver: true,
+    }),
+  ]).start();
+
+  // Nettoyer les champs au montage du composant
+  dispatchFormState({
+    inputId: 'password',
+    validationResult: undefined,
+    inputValue: '',
+  });
+  dispatchFormState({
+    inputId: 'confirmPassword',
+    validationResult: undefined,
+    inputValue: '',
+  });
+}, [fadeAnimation, slideAnimation]);
 
   const inputChangedHandler = useCallback(
     (inputId: string, inputValue: string) => {

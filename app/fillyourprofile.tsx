@@ -222,8 +222,8 @@ const FillYourProfile = () => {
             }}>
               <TouchableOpacity
                 style={[styles.inputBtn, {
-                  backgroundColor: dark ? COLORS.dark2 : COLORS.greyscale500,
-                  borderColor: dark ? COLORS.dark2 : COLORS.greyscale500,
+                  backgroundColor: dark ? COLORS.dark2 : COLORS.grayscale500,
+                  borderColor: dark ? COLORS.dark2 : COLORS.grayscale500,
                 }]}
                 onPress={handleOnPressStartDate}
               >
@@ -232,8 +232,8 @@ const FillYourProfile = () => {
               </TouchableOpacity>
             </View>
             <View style={[styles.inputContainer, {
-              backgroundColor: dark ? COLORS.dark2 : COLORS.greyscale500,
-              borderColor: dark ? COLORS.dark2 : COLORS.greyscale500,
+              backgroundColor: dark ? COLORS.dark2 : COLORS.grayscale500,
+              borderColor: dark ? COLORS.dark2 : COLORS.grayscale500,
             }]}>
               <TouchableOpacity
                 style={styles.selectFlagContainer}
@@ -263,7 +263,8 @@ const FillYourProfile = () => {
                 placeholderTextColor={COLORS.gray}
                 selectionColor="#111"
                 keyboardType="numeric"
-              />
+              autoCapitalize="none"
+          />
             </View>
           </View>
         </ScrollView>
@@ -334,14 +335,14 @@ const styles = StyleSheet.create({
   },
   inputContainer: {
     flexDirection: "row",
-    borderColor: COLORS.greyscale500,
+    borderColor: COLORS.grayscale500,
     borderWidth: .4,
     borderRadius: 12,
     height: 52,
     width: SIZES.width - 32,
     alignItems: 'center',
     marginVertical: 12,
-    backgroundColor: COLORS.greyscale500,
+    backgroundColor: COLORS.grayscale500,
   },
   downIcon: {
     width: 10,
@@ -368,13 +369,13 @@ const styles = StyleSheet.create({
   inputBtn: {
     borderWidth: 1,
     borderRadius: 12,
-    borderColor: COLORS.greyscale500,
+    borderColor: COLORS.grayscale500,
     height: 52,
     paddingLeft: 8,
     fontSize: 18,
     justifyContent: "space-between",
     marginTop: 4,
-    backgroundColor: COLORS.greyscale500,
+    backgroundColor: COLORS.grayscale500,
     flexDirection: "row",
     alignItems: "center",
     paddingRight: 8

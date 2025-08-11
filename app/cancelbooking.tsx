@@ -1,6 +1,6 @@
 import { View, Text, StyleSheet, TextInput } from 'react-native';
 import React, { useState } from 'react';
-import { ScrollView } from 'react-native-virtualized-view';
+import { ScrollView } from 'react-native';
 import { COLORS, SIZES } from "../constants";
 import { SafeAreaView } from 'react-native-safe-area-context';
 import Button from '../components/Button';
@@ -82,7 +82,8 @@ const CancelBooking = () => {
                     placeholderTextColor={dark ? COLORS.secondaryWhite : COLORS.greyscale900}
                     multiline={true}
                     numberOfLines={4} // Set the number of lines you want to display initially
-                />
+                autoCapitalize="none"
+          />
             </View>
         )
     }

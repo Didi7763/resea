@@ -2,7 +2,7 @@ import { View, Text, StyleSheet, TouchableOpacity, Modal, TouchableWithoutFeedba
 import React, { useEffect, useState } from 'react';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import Header from '@/components/Header';
-import { ScrollView } from 'react-native-virtualized-view';
+import { ScrollView } from 'react-native';
 import { useTheme } from '@/theme/ThemeProvider';
 import { COLORS, SIZES, icons } from '@/constants';
 import { Ionicons } from "@expo/vector-icons";

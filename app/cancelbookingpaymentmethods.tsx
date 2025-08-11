@@ -3,7 +3,7 @@ import React, { useState } from 'react';
 import { COLORS, SIZES, icons, illustrations } from '../constants';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import Header from '../components/Header';
-import { ScrollView } from 'react-native-virtualized-view';
+import { ScrollView } from 'react-native';
 import PaymentMethodItem from '../components/PaymentMethodItem';
 import Button from '../components/Button';
 import { useTheme } from '../theme/ThemeProvider';

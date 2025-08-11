@@ -3,7 +3,7 @@ import React from 'react';
 import { COLORS, SIZES } from '../constants';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import Header from '../components/Header';
-import { ScrollView } from 'react-native-virtualized-view';
+import { ScrollView } from 'react-native';
 import Button from '../components/Button';
 import { useTheme } from '../theme/ThemeProvider';
 import { useNavigation } from 'expo-router';
@@ -23,7 +23,7 @@ const Address = () => {
         <SafeAreaView style={[styles.area, { backgroundColor: colors.background }]}>
             <View style={[styles.container, { backgroundColor: colors.background }]}>
                 <Header title="Address" />
-                <ScrollView
+                <View
                     contentContainerStyle={{ marginVertical: 12 }}
                     showsVerticalScrollIndicator={false}>
                     <FlatList
@@ -37,7 +37,7 @@ const Address = () => {
                             />
                         )}
                     />
-                </ScrollView>
+                </View>
             </View>
             <View style={styles.btnContainer}>
                 <Button

@@ -1,7 +1,7 @@
 import { View, Text, StyleSheet, TouchableOpacity, Switch, Image } from 'react-native';
 import React, { useState, useRef } from 'react';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { ScrollView } from 'react-native-virtualized-view';
+import { ScrollView } from 'react-native';
 import { MaterialIcons } from '@expo/vector-icons';
 import RBSheet from "react-native-raw-bottom-sheet";
 import Button from '@/components/Button';
@@ -256,7 +256,7 @@ const Profile = () => {
       >
         <Text style={styles.bottomTitle}>Logout</Text>
         <View style={[styles.separateLine, {
-          backgroundColor: dark ? COLORS.greyScale800 : COLORS.grayscale200,
+          backgroundColor: dark ? COLORS.greyscale800 : COLORS.grayscale200,
         }]} />
         <Text style={[styles.bottomSubtitle, {
           color: dark ? COLORS.white : COLORS.black

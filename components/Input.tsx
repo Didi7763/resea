@@ -32,8 +32,8 @@ const Input: FC<InputProps> = (props) => {
         style={[
           styles.inputContainer,
           {
-            borderColor: isFocused ? COLORS.primary : dark ? COLORS.dark2 : COLORS.greyscale500,
-            backgroundColor: isFocused ? COLORS.tansparentPrimary : dark ? COLORS.dark2 : COLORS.greyscale500,
+            borderColor: isFocused ? COLORS.primary : dark ? COLORS.dark2 : COLORS.grayscale500,
+            backgroundColor: isFocused ? COLORS.tansparentPrimary : dark ? COLORS.dark2 : COLORS.grayscale500,
           },
         ]}
       >
@@ -56,12 +56,11 @@ const Input: FC<InputProps> = (props) => {
           style={[styles.input, { color: dark ? COLORS.white : COLORS.black }]}
           placeholder={props.placeholder}
           placeholderTextColor={props.placeholderTextColor}
-          autoCapitalize="none"
-        />
+          autoCapitalize="none" />
       </View>
-      {props.errorText && (
+      {props.errorText && props.errorText.length > 0 && (
         <View style={styles.errorContainer}>
-          <Text style={styles.errorText}>{props.errorText}</Text>
+          <Text style={styles.errorText}>{props.errorText[0]}</Text>
         </View>
       )}
     </View>

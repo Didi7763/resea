@@ -2,7 +2,7 @@ import { View, Text, StyleSheet, TouchableOpacity, Image } from 'react-native';
 import React from 'react';
 import { COLORS, icons, illustrations } from '@/constants';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { ScrollView } from 'react-native-virtualized-view';
+import { ScrollView } from 'react-native';
 import { NavigationProp } from '@react-navigation/native';
 import { useTheme } from '@/theme/ThemeProvider';
 import { useNavigation } from 'expo-router';

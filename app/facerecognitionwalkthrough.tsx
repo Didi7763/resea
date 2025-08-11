@@ -2,7 +2,7 @@ import { View, Text, StyleSheet, Image } from 'react-native';
 import React from 'react';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import Header from '@/components/Header';
-import { ScrollView } from 'react-native-virtualized-view';
+import { ScrollView } from 'react-native';
 import { useTheme } from '@/theme/ThemeProvider';
 import { COLORS, SIZES, icons } from '@/constants';
 import Button from '@/components/Button';

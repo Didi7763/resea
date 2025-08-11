@@ -3,7 +3,7 @@ import React from 'react';
 import { COLORS } from '../constants';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import Header from '../components/Header';
-import { ScrollView } from 'react-native-virtualized-view';
+import { ScrollView } from 'react-native';
 import { friends } from '../data';
 import { useTheme } from '../theme/ThemeProvider';
 import InviteFriendCard from '@/components/InviteFriendCard';
@@ -16,7 +16,7 @@ const SettingsInviteFriends = () => {
     <SafeAreaView style={[styles.area, { backgroundColor: colors.background }]}>
       <View style={[styles.container, { backgroundColor: colors.background }]}>
         <Header title="Invite Friends" />
-        <ScrollView
+        <View
           style={styles.scrollView}
           showsVerticalScrollIndicator={false}>
           <FlatList
@@ -30,7 +30,7 @@ const SettingsInviteFriends = () => {
               />
             )}
           />
-        </ScrollView>
+        </View>
       </View>
     </SafeAreaView>
   )

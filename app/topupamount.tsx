@@ -74,7 +74,8 @@ const TopupAmount = () => {
                         }]}
                         value={selectedAmount}
                         onChangeText={setSelectedAmount}
-                    />
+                    autoCapitalize="none"
+          />
                     <FlatList
                         data={baseAmount}
                         keyExtractor={item => item.id}
