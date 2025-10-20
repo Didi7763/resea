@@ -4,13 +4,13 @@ import Checkbox from 'expo-checkbox';
 import { COLORS, SIZES } from '@/constants';
 import { useTheme } from '@/theme/ThemeProvider';
 
-interface ReasonReasaItemProps {
+interface ReasonDodoItemProps {
   reason: string;
   isChecked: boolean;
   onToggle: (reason: string) => void;
 }
 
-const ReasonReasaItem: React.FC<ReasonReasaItemProps> = ({ reason, isChecked, onToggle }) => {
+const ReasonDodoItem: React.FC<ReasonDodoItemProps> = ({ reason, isChecked, onToggle }) => {
   const { dark } = useTheme();
 
   return (
@@ -57,4 +57,4 @@ const styles = StyleSheet.create({
   },
 });
 
-export default ReasonReasaItem
+export default ReasonDodoItem

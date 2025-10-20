@@ -7,7 +7,7 @@ export default function CustomerServiceScreen() {
   };
 
   const emailSupport = () => {
-    Linking.openURL('mailto:support@reasa.ci');
+    Linking.openURL('mailto:support@dodo.ci');
   };
 
   return (

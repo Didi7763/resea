@@ -1,7 +1,6 @@
-import { View, Text, StyleSheet, TouchableOpacity, Switch, Image } from 'react-native';
 import React, { useState, useRef } from 'react';
+import { View, Text, StyleSheet, TouchableOpacity, Switch, Image, ScrollView } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { ScrollView } from 'react-native';
 import { MaterialIcons } from '@expo/vector-icons';
 import RBSheet from "react-native-raw-bottom-sheet";
 import Button from '@/components/Button';
@@ -48,19 +47,21 @@ const Profile = () => {
   /**
    * render user profile
    */
+  const [image, setImage] = useState(images.user1);
+
+  const pickImage = async () => {
+    try {
+      const tempUri = await launchImagePicker()
+
+      if (!tempUri) return
+
+      // Set the image
+      setImage({ uri: tempUri })
+    } catch (error) {
+    }
+  };
+
   const renderProfile = () => {
-    const [image, setImage] = useState(images.user1)
-
-    const pickImage = async () => {
-      try {
-        const tempUri = await launchImagePicker()
-
-        if (!tempUri) return
-
-        // Set the image
-        setImage({ uri: tempUri })
-      } catch (error) { }
-    };
     return (
       <View style={styles.profileContainer}>
         <View>
@@ -83,16 +84,35 @@ const Profile = () => {
   /**
    * Render Settings
    */
-  const renderSettings = () => {
-    const [isDarkMode, setIsDarkMode] = useState(false);
+  const [isDarkMode, setIsDarkMode] = useState(false);
 
-    const toggleDarkMode = () => {
-      setIsDarkMode((prev) => !prev);
-      dark ? setScheme('light') : setScheme('dark')
-    };
+  const toggleDarkMode = () => {
+    setIsDarkMode((prev) => !prev);
+    if (dark) {
+      setScheme('light');
+    } else {
+      setScheme('dark');
+    }
+  };
+
+  const renderSettings = () => {
 
     return (
       <View style={styles.settingsContainer}>
+        {/* Onglets essentiels seulement */}
+        <SettingsItem
+          icon={icons.userOutline}
+          name="Edit Profile"
+          onPress={() => navigate("editprofile")}
+        />
+        <SettingsItem
+          icon={icons.home}
+          name="Mes Résidences"
+          onPress={() => navigate("propertiesmanagement")}
+        />
+        
+        {/* Onglets commentés pour utilisation ultérieure */}
+        {/*
         <SettingsItem
           icon={icons.bell3}
           name="My Notification"
@@ -109,11 +129,6 @@ const Profile = () => {
           onPress={() => navigate("address")}
         />
         <SettingsItem
-          icon={icons.userOutline}
-          name="Edit Profile"
-          onPress={() => navigate("editprofile")}
-        />
-        <SettingsItem
           icon={icons.bell2}
           name="Notification"
           onPress={() => navigate("settingsnotifications")}
@@ -122,11 +137,6 @@ const Profile = () => {
           icon={icons.wallet2Outline}
           name="Payment"
           onPress={() => navigate("settingspayment")}
-        />
-        <SettingsItem
-          icon={icons.home}
-          name="Mes Résidences"
-          onPress={() => navigate("propertiesmanagement")}
         />
         <SettingsItem
           icon={icons.fundOutline}
@@ -138,6 +148,7 @@ const Profile = () => {
           name="Security"
           onPress={() => navigate("settingssecurity")}
         />
+        */}
         <TouchableOpacity
           onPress={() => navigate("settingslanguage")}
           style={styles.settingsItemContainer}>
@@ -225,6 +236,77 @@ const Profile = () => {
       </View>
     )
   }
+
+  /**
+   * Render Become Pro Section
+   */
+  const renderBecomeProSection = () => {
+    return (
+      <View style={[styles.becomeProContainer, {
+        backgroundColor: dark ? COLORS.dark2 : COLORS.white
+      }]}>
+        {/* Bouton principal Devenir Pro */}
+        <TouchableOpacity
+          style={[styles.becomeProButton, {
+            backgroundColor: COLORS.primary
+          }]}
+          onPress={() => navigate("professional-signup")}
+        >
+          <View style={styles.becomeProContent}>
+            <MaterialIcons name="business" size={24} color={COLORS.white} />
+            <Text style={styles.becomeProText}>Devenir Pro</Text>
+          </View>
+        </TouchableOpacity>
+
+        {/* Section informative des avantages */}
+        <View style={[styles.advantagesContainer, {
+          backgroundColor: dark ? COLORS.dark3 : COLORS.tansparentPrimary
+        }]}>
+          <Text style={[styles.advantagesTitle, {
+            color: dark ? COLORS.white : COLORS.primary
+          }]}>Avantages Propriétaire Pro</Text>
+          
+          <View style={styles.advantagesList}>
+            <View style={styles.advantageItem}>
+              <MaterialIcons name="check-circle" size={16} color={COLORS.primary} />
+              <Text style={[styles.advantageText, {
+                color: dark ? COLORS.grayscale400 : COLORS.greyscale700
+              }]}>Listez vos propriétés gratuitement</Text>
+            </View>
+            
+            <View style={styles.advantageItem}>
+              <MaterialIcons name="check-circle" size={16} color={COLORS.primary} />
+              <Text style={[styles.advantageText, {
+                color: dark ? COLORS.grayscale400 : COLORS.greyscale700
+              }]}>Commissions réduites sur les réservations</Text>
+            </View>
+            
+            <View style={styles.advantageItem}>
+              <MaterialIcons name="check-circle" size={16} color={COLORS.primary} />
+              <Text style={[styles.advantageText, {
+                color: dark ? COLORS.grayscale400 : COLORS.greyscale700
+              }]}>Gestion avancée des réservations</Text>
+            </View>
+            
+            <View style={styles.advantageItem}>
+              <MaterialIcons name="check-circle" size={16} color={COLORS.primary} />
+              <Text style={[styles.advantageText, {
+                color: dark ? COLORS.grayscale400 : COLORS.greyscale700
+              }]}>Support prioritaire 24/7</Text>
+            </View>
+            
+            <View style={styles.advantageItem}>
+              <MaterialIcons name="check-circle" size={16} color={COLORS.primary} />
+              <Text style={[styles.advantageText, {
+                color: dark ? COLORS.grayscale400 : COLORS.greyscale700
+              }]}>Badge &quot;Propriétaire Vérifié&quot;</Text>
+            </View>
+          </View>
+        </View>
+      </View>
+    )
+  }
+
   return (
     <SafeAreaView style={[styles.area, { backgroundColor: colors.background }]}>
       <View style={[styles.container, { backgroundColor: colors.background }]}>
@@ -232,6 +314,7 @@ const Profile = () => {
         <ScrollView showsVerticalScrollIndicator={false}>
           {renderProfile()}
           {renderSettings()}
+          {renderBecomeProSection()}
         </ScrollView>
       </View>
       <RBSheet
@@ -457,6 +540,64 @@ const styles = StyleSheet.create({
     height: 1,
     backgroundColor: COLORS.grayscale200,
     marginTop: 12
+  },
+  // Nouveaux styles pour la section Devenir Pro
+  becomeProContainer: {
+    marginTop: 20,
+    marginBottom: 20,
+    borderRadius: 16,
+    overflow: 'hidden'
+  },
+  becomeProButton: {
+    marginHorizontal: 16,
+    marginTop: 16,
+    paddingVertical: 16,
+    paddingHorizontal: 20,
+    borderRadius: 12,
+    elevation: 3,
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.25,
+    shadowRadius: 3.84,
+  },
+  becomeProContent: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center'
+  },
+  becomeProText: {
+    color: COLORS.white,
+    fontSize: 18,
+    fontFamily: "semiBold",
+    marginLeft: 12
+  },
+  advantagesContainer: {
+    margin: 16,
+    padding: 16,
+    borderRadius: 12
+  },
+  advantagesTitle: {
+    fontSize: 16,
+    fontFamily: "semiBold",
+    marginBottom: 12,
+    textAlign: 'center'
+  },
+  advantagesList: {
+    gap: 8
+  },
+  advantageItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 4
+  },
+  advantageText: {
+    fontSize: 14,
+    fontFamily: "medium",
+    marginLeft: 8,
+    flex: 1
   }
 })
 

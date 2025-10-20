@@ -293,7 +293,7 @@ const Signup = () => {
   const handleFinalSubmit = () => {
     Alert.alert(
       'Compte créé avec succès !',
-      'Votre compte REASA a été créé. Vous pouvez maintenant vous connecter.',
+      'Votre compte DODO a été créé. Vous pouvez maintenant vous connecter.',
       [{
         text: 'Se connecter',
         onPress: () => router.replace('/login')
@@ -624,7 +624,7 @@ const Signup = () => {
                       Compte créé avec succès !
                     </Text>
                     <Text style={[styles.subtitle, { color: dark ? COLORS.grayscale400 : COLORS.grayscale700 }]}>
-                      Votre compte REASA est prêt. Vous pouvez maintenant explorer les meilleures propriétés immobilières.
+                      Votre compte DODO est prêt. Vous pouvez maintenant explorer les meilleures propriétés immobilières.
                     </Text>
                   </View>
 

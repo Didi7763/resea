@@ -8,24 +8,25 @@ import {
   Dimensions,
   Animated,
   StatusBar,
-  ScrollView  // CHANGÉ: Import du ScrollView standard
+  ScrollView
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-// SUPPRIMÉ: import ScrollView from react-native-virtualized-view
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 
-import { COLORS, SIZES, icons, illustrations } from '../constants';
+import { COLORS, icons, illustrations } from '../constants';
 import { useTheme } from '../theme/ThemeProvider';
 import Button from '../components/Button';
 import SocialButtonV2 from '../components/SocialButtonV2';
+import { useGoogleAuth } from '../hooks/useGoogleAuth';
 
-const { width, height } = Dimensions.get('window');
+const { width } = Dimensions.get('window');
 
 const Welcome = () => {
   const router = useRouter();
   const { colors, dark } = useTheme();
+  const { user, isLoading, isAuthenticated, signIn } = useGoogleAuth();
 
   // Animation values
   const fadeAnimation = useRef(new Animated.Value(0)).current;
@@ -53,10 +54,23 @@ const Welcome = () => {
     ]).start();
   }, [fadeAnimation, slideAnimation, scaleAnimation]);
 
+  const handleGoogleLogin = async () => {
+    try {
+      await signIn();
+      
+      // Si l'authentification réussit, naviguer vers l'écran principal
+      if (isAuthenticated && user) {
+        router.replace('/(tabs)');
+      }
+    } catch (error) {
+      console.error('Erreur de connexion Google:', error);
+    }
+  };
+
   const handleSocialLogin = (provider: string) => {
-    console.log(`${provider} Authentication`);
-    // Simulation de connexion réussie
-    router.replace('/(tabs)');
+    if (provider === 'Google') {
+      handleGoogleLogin();
+    }
   };
 
   const handlePhoneLogin = () => {
@@ -126,27 +140,18 @@ const Welcome = () => {
                 Connectez-vous
               </Text>
               <Text style={[styles.subtitle, { color: dark ? COLORS.grayscale400 : COLORS.grayscale700 }]}>
-                Accédez à votre compte REASA et découvrez les meilleures propriétés
+                Accédez à votre compte DODO et découvrez les meilleures propriétés
               </Text>
             </View>
 
-            {/* Social Login Options */}
-            <View style={styles.socialContainer}>
-              <SocialButtonV2
-                title="Continuer avec Google"
-                icon={icons.google}
-                onPress={() => handleSocialLogin('Google')}
-              />
-              <SocialButtonV2
-                title="Continuer avec Facebook"
-                icon={icons.facebook}
-                onPress={() => handleSocialLogin('Facebook')}
-              />
-              <SocialButtonV2
-                title="Continuer avec Apple"
-                icon={icons.appleLogo}
-                onPress={() => handleSocialLogin('Apple')}
-                iconStyles={{ tintColor: dark ? COLORS.white : COLORS.black }}
+            {/* Primary Login Button */}
+            <View style={styles.primaryButtonContainer}>
+              <Button
+                title="Se connecter"
+                filled
+                onPress={handlePhoneLogin}
+                style={styles.primaryButton}
+                disabled={isLoading}
               />
             </View>
 
@@ -154,32 +159,34 @@ const Welcome = () => {
             <View style={styles.dividerContainer}>
               <View style={[styles.dividerLine, { backgroundColor: dark ? COLORS.greyscale800 : COLORS.grayscale200 }]} />
               <Text style={[styles.dividerText, { color: dark ? COLORS.white : COLORS.grayscale700 }]}>
-                Ou
+                Ou continuer avec
               </Text>
               <View style={[styles.dividerLine, { backgroundColor: dark ? COLORS.greyscale800 : COLORS.grayscale200 }]} />
             </View>
 
-            {/* Phone Login Button */}
-            <View style={styles.phoneButtonContainer}>
-              <Button
-                title="Se connecter avec un numéro"
-                filled
-                onPress={handlePhoneLogin}
-                style={styles.phoneButton}
+            {/* Google Login */}
+            <View style={styles.socialContainer}>
+              <SocialButtonV2
+                title={isLoading ? "Connexion en cours..." : "Google"}
+                icon={icons.google}
+                onPress={() => handleSocialLogin('Google')}
+                disabled={isLoading}
+                style={styles.googleButton}
               />
-              <View style={styles.phoneIconOverlay}>
-                <Ionicons
-                  name="call-outline"
-                  size={20}
-                  color={COLORS.white}
-                />
-              </View>
+              
+              {/* Bouton de test pour l'authentification Google */}
+              <TouchableOpacity
+                style={[styles.testButton, { backgroundColor: COLORS.secondary }]}
+                onPress={() => router.push('/google-auth-test' as any)}
+              >
+                <Text style={styles.testButtonText}>🧪 Test Auth Google</Text>
+              </TouchableOpacity>
             </View>
 
             {/* Quick Features */}
             <View style={styles.featuresContainer}>
               <Text style={[styles.featuresTitle, { color: colors.text }]}>
-                Pourquoi choisir REASA ?
+                Pourquoi choisir DODO ?
               </Text>
               <View style={styles.featuresList}>
                 <View style={styles.featureItem}>
@@ -299,8 +306,23 @@ const styles = StyleSheet.create({
     lineHeight: 24,
     paddingHorizontal: 20,
   },
-  socialContainer: {
+  primaryButtonContainer: {
     marginBottom: 24,
+  },
+  primaryButton: {
+    borderRadius: 30,
+    height: 56,
+    backgroundColor: COLORS.primary,
+  },
+  socialContainer: {
+    marginBottom: 32,
+  },
+  googleButton: {
+    borderRadius: 30,
+    height: 56,
+    backgroundColor: 'transparent',
+    borderWidth: 1.5,
+    borderColor: COLORS.grayscale200,
   },
   dividerContainer: {
     flexDirection: 'row',
@@ -316,21 +338,7 @@ const styles = StyleSheet.create({
     fontFamily: 'medium',
     marginHorizontal: 16,
   },
-  phoneButtonContainer: {
-    position: 'relative',
-    marginBottom: 32,
-  },
-  phoneButton: {
-    borderRadius: 30,
-    paddingLeft: 50,
-  },
-  phoneIconOverlay: {
-    position: 'absolute',
-    left: 20,
-    top: '50%',
-    marginTop: -10,
-    zIndex: 1,
-  },
+
   featuresContainer: {
     alignItems: 'center',
     marginBottom: 32,
@@ -377,6 +385,18 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontFamily: 'semiBold',
     color: COLORS.primary,
+  },
+  testButton: {
+    marginTop: 15,
+    paddingVertical: 12,
+    paddingHorizontal: 20,
+    borderRadius: 25,
+    alignItems: 'center',
+  },
+  testButtonText: {
+    color: 'white',
+    fontSize: 14,
+    fontWeight: '600',
   },
   backgroundElement: {
     position: 'absolute',

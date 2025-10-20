@@ -39,9 +39,11 @@ export const reducer = (state: any, action: any) => {
         }
     }
 
-    return {
+    const newState = {
         inputValues: updatedValues,
         inputValidities: updatedValidities,
         formIsValid: updatedFormIsValid,
     };
+    
+    return newState;
 };

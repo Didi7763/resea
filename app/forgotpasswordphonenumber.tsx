@@ -1,5 +1,5 @@
-import { View, Text, StyleSheet, ScrollView, Alert, TouchableOpacity, Image } from 'react-native';
-import React, { useState, useCallback, useReducer } from 'react';
+import { View, Text, StyleSheet, ScrollView, Alert, TouchableOpacity, Image, TextInput, Animated } from 'react-native';
+import React, { useState, useCallback, useReducer, useRef } from 'react';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
@@ -15,13 +15,9 @@ import { reducer } from '../utils/reducers/formReducers';
 interface FormState {
   inputValues: {
     email: string;
-    newPassword: string;
-    confirmPassword: string;
   };
   inputValidities: {
     email: string | undefined;
-    newPassword: string | undefined;
-    confirmPassword: string | undefined;
   };
   formIsValid: boolean;
 }
@@ -29,23 +25,24 @@ interface FormState {
 const initialState: FormState = {
   inputValues: {
     email: '',
-    newPassword: '',
-    confirmPassword: '',
   },
   inputValidities: {
     email: undefined,
-    newPassword: undefined,
-    confirmPassword: undefined,
   },
   formIsValid: false,
 };
 
 const ForgotPasswordEmail = () => {
   const router = useRouter();
-  const { colors, dark } = useTheme();
+    const { colors, dark } = useTheme();
   const [formState, dispatchFormState] = useReducer(reducer, initialState);
   const [isLoading, setIsLoading] = useState(false);
-  const [currentStep, setCurrentStep] = useState<'email' | 'password'>('email');
+  const [currentStep, setCurrentStep] = useState<'email' | 'pin' | 'confirmPin'>('email');
+  const [newPin, setNewPin] = useState(['', '', '', '']);
+  const [confirmPin, setConfirmPin] = useState(['', '', '', '']);
+  const inputRefs = useRef<(TextInput | null)[]>([]);
+  const confirmInputRefs = useRef<(TextInput | null)[]>([]);
+  const shakeAnimation = useRef(new Animated.Value(0)).current;
 
 
   const inputChangedHandler = useCallback(
@@ -60,8 +57,50 @@ const ForgotPasswordEmail = () => {
     [dispatchFormState]
   );
 
+  // Animation de shake pour les erreurs PIN
+  const shakePin = () => {
+    Animated.sequence([
+      Animated.timing(shakeAnimation, { toValue: 10, duration: 100, useNativeDriver: true }),
+      Animated.timing(shakeAnimation, { toValue: -10, duration: 100, useNativeDriver: true }),
+      Animated.timing(shakeAnimation, { toValue: 10, duration: 100, useNativeDriver: true }),
+      Animated.timing(shakeAnimation, { toValue: 0, duration: 100, useNativeDriver: true }),
+    ]).start();
+  };
+
+  // Gestion des changements de PIN
+  const handlePinChange = (text: string, index: number, isConfirm = false) => {
+    if (text.length > 1) return;
+    
+    const currentPin = isConfirm ? [...confirmPin] : [...newPin];
+    currentPin[index] = text;
+    
+    if (isConfirm) {
+      setConfirmPin(currentPin);
+    } else {
+      setNewPin(currentPin);
+    }
+
+    // Focus sur le champ suivant
+    if (text && index < 3) {
+      const refs = isConfirm ? confirmInputRefs : inputRefs;
+      refs.current[index + 1]?.focus();
+    }
+  };
+
+  // Gestion du retour arrière
+  const handleKeyPress = (e: any, index: number, isConfirm = false) => {
+    if (e.nativeEvent.key === 'Backspace') {
+      const currentPin = isConfirm ? [...confirmPin] : [...newPin];
+      
+      if (currentPin[index] === '' && index > 0) {
+        const refs = isConfirm ? confirmInputRefs : inputRefs;
+        refs.current[index - 1]?.focus();
+      }
+    }
+  };
+
   const handleEmailSubmit = async () => {
-    if (!formState.formIsValid) {
+    if (!formState.inputValidities.email) {
       Alert.alert('Erreur', 'Veuillez saisir une adresse email valide.');
       return;
     }
@@ -72,46 +111,63 @@ const ForgotPasswordEmail = () => {
       // Simulation d'envoi d'email de réinitialisation
       await new Promise(resolve => setTimeout(resolve, 2000));
       
-      // Générer un token de réinitialisation (simulation)
-      const token = Math.random().toString(36).substring(2, 15);
-      
       Alert.alert(
         'Email envoyé',
-        'Un lien de réinitialisation a été envoyé à votre adresse email. Veuillez vérifier votre boîte de réception.',
+        'Un lien de réinitialisation a été envoyé à votre adresse email. Vous pouvez maintenant créer un nouveau code PIN.',
         [
           {
             text: 'OK',
-            onPress: () => setCurrentStep('password')
+            onPress: () => setCurrentStep('pin')
           }
         ]
       );
     } catch (error) {
+      console.error('Erreur envoi email:', error);
       Alert.alert('Erreur', 'Impossible d\'envoyer l\'email. Veuillez réessayer.');
     } finally {
       setIsLoading(false);
     }
   };
 
-  const handlePasswordReset = async () => {
-    if (!formState.formIsValid) {
-      Alert.alert('Erreur', 'Veuillez remplir tous les champs correctement.');
+  const handlePinSubmit = () => {
+    const pinValue = newPin.join('');
+    if (pinValue.length !== 4) {
+      shakePin();
+      Alert.alert('Erreur', 'Veuillez saisir un code PIN à 4 chiffres.');
       return;
     }
 
-    if (formState.inputValues.newPassword !== formState.inputValues.confirmPassword) {
-      Alert.alert('Erreur', 'Les mots de passe ne correspondent pas.');
+    setCurrentStep('confirmPin');
+  };
+
+  const handleConfirmPinSubmit = async () => {
+    const pinValue = newPin.join('');
+    const confirmPinValue = confirmPin.join('');
+    
+    if (confirmPinValue.length !== 4) {
+      shakePin();
+      Alert.alert('Erreur', 'Veuillez confirmer votre code PIN à 4 chiffres.');
+      return;
+    }
+
+    if (pinValue !== confirmPinValue) {
+      shakePin();
+      setConfirmPin(['', '', '', '']);
+      Alert.alert('Erreur', 'Les codes PIN ne correspondent pas. Veuillez réessayer.');
+      // Focus sur le premier champ de confirmation
+      confirmInputRefs.current[0]?.focus();
       return;
     }
 
     setIsLoading(true);
     
     try {
-      // Simulation de réinitialisation du mot de passe
+      // Simulation de réinitialisation du PIN
       await new Promise(resolve => setTimeout(resolve, 2000));
       
       Alert.alert(
         'Succès',
-        'Votre mot de passe a été réinitialisé avec succès.',
+        'Votre code PIN a été réinitialisé avec succès.',
         [
           {
             text: 'OK',
@@ -120,14 +176,15 @@ const ForgotPasswordEmail = () => {
         ]
       );
     } catch (error) {
-      Alert.alert('Erreur', 'Impossible de réinitialiser le mot de passe. Veuillez réessayer.');
+      console.error('Erreur réinitialisation PIN:', error);
+      Alert.alert('Erreur', 'Impossible de réinitialiser le code PIN. Veuillez réessayer.');
     } finally {
       setIsLoading(false);
     }
   };
 
-  return (
-    <SafeAreaView style={[styles.area, { backgroundColor: colors.background }]}>
+    return (
+        <SafeAreaView style={[styles.area, { backgroundColor: colors.background }]}>
       <LinearGradient
         colors={[
           dark ? COLORS.dark1 : COLORS.white,
@@ -152,19 +209,19 @@ const ForgotPasswordEmail = () => {
 
         <ScrollView showsVerticalScrollIndicator={false} style={styles.scrollView}>
           {/* Logo */}
-          <View style={styles.logoContainer}>
-            <Image
-              source={images.logo}
+                    <View style={styles.logoContainer}>
+                        <Image
+                            source={images.logo}
               resizeMode="contain"
-              style={styles.logo}
-            />
-          </View>
+                            style={styles.logo}
+                        />
+                    </View>
 
           {currentStep === 'email' ? (
             // Étape 1: Saisie de l'email
             <View style={styles.contentContainer}>
               <Text style={[styles.title, { color: colors.text }]}>
-                Réinitialiser votre mot de passe
+                Réinitialiser votre code PIN
               </Text>
               <Text style={[styles.subtitle, { color: dark ? COLORS.grayscale400 : COLORS.grayscale700 }]}>
                 Saisissez votre adresse email pour recevoir un lien de réinitialisation
@@ -179,15 +236,15 @@ const ForgotPasswordEmail = () => {
                   placeholderTextColor={dark ? COLORS.grayTie : COLORS.grayscale600}
                   icon={icons.email}
                   keyboardType="email-address"
-                />
-              </View>
+                                />
+                            </View>
 
               <Button
                 title={isLoading ? 'Envoi en cours...' : 'Envoyer le lien'}
                 filled
                 onPress={handleEmailSubmit}
                 style={styles.button}
-                disabled={isLoading || !formState.formIsValid}
+                disabled={isLoading || !formState.inputValidities.email}
               />
 
               <TouchableOpacity
@@ -198,71 +255,142 @@ const ForgotPasswordEmail = () => {
                   Retour à la connexion
                 </Text>
               </TouchableOpacity>
-            </View>
-          ) : (
-            // Étape 2: Nouveau mot de passe
+                            </View>
+          ) : currentStep === 'pin' ? (
+            // Étape 2: Création du nouveau PIN
             <View style={styles.contentContainer}>
               <Text style={[styles.title, { color: colors.text }]}>
-                Créer un nouveau mot de passe
+                Créer un nouveau code PIN
               </Text>
               <Text style={[styles.subtitle, { color: dark ? COLORS.grayscale400 : COLORS.grayscale700 }]}>
-                Choisissez un mot de passe sécurisé pour votre compte
+                Choisissez un code PIN à 4 chiffres pour sécuriser votre compte
               </Text>
 
-              <View style={styles.inputContainer}>
-                <Input
-                  id="newPassword"
-                  onInputChanged={inputChangedHandler}
-                  errorText={formState.inputValidities.newPassword ? [formState.inputValidities.newPassword] : undefined}
-                  placeholder="Nouveau mot de passe"
-                  placeholderTextColor={dark ? COLORS.grayTie : COLORS.grayscale600}
-                  icon={icons.lock}
-                  secureTextEntry
-                />
-              </View>
+              <Animated.View
+                style={[
+                  styles.pinContainer,
+                  { transform: [{ translateX: shakeAnimation }] }
+                ]}
+              >
+                {newPin.map((digit, index) => (
+                        <TextInput
+                    key={index}
+                    ref={(ref) => {
+                      if (ref) inputRefs.current[index] = ref;
+                    }}
+                    style={[
+                      styles.pinInput,
+                      {
+                        backgroundColor: dark ? COLORS.dark3 : COLORS.white,
+                        borderColor: digit 
+                          ? COLORS.primary 
+                          : dark ? COLORS.dark3 : COLORS.grayscale200,
+                        color: colors.text,
+                      }
+                    ]}
+                    value={digit}
+                    onChangeText={(text) => handlePinChange(text, index)}
+                    onKeyPress={(e) => handleKeyPress(e, index)}
+                    keyboardType="number-pad"
+                    maxLength={1}
+                    secureTextEntry
+                    selectTextOnFocus
+                    textContentType="oneTimeCode"
+                  />
+                ))}
+              </Animated.View>
 
-              <View style={styles.inputContainer}>
-                <Input
-                  id="confirmPassword"
-                  onInputChanged={inputChangedHandler}
-                  errorText={formState.inputValidities.confirmPassword ? [formState.inputValidities.confirmPassword] : undefined}
-                  placeholder="Confirmer le mot de passe"
-                  placeholderTextColor={dark ? COLORS.grayTie : COLORS.grayscale600}
-                  icon={icons.lock}
-                  secureTextEntry
-                />
-              </View>
+                    <Button
+                title="Continuer"
+                        filled
+                onPress={handlePinSubmit}
+                        style={styles.button}
+                disabled={newPin.join('').length !== 4}
+                    />
 
-              <Button
-                title={isLoading ? 'Réinitialisation...' : 'Réinitialiser le mot de passe'}
-                filled
-                onPress={handlePasswordReset}
-                style={styles.button}
-                disabled={isLoading || !formState.formIsValid}
-              />
-
-              <TouchableOpacity
+                    <TouchableOpacity
                 style={styles.backToEmailContainer}
                 onPress={() => setCurrentStep('email')}
               >
                 <Text style={styles.backToEmailText}>
                   Retour à la saisie d&apos;email
                 </Text>
-              </TouchableOpacity>
+                    </TouchableOpacity>
+                    </View>
+          ) : (
+            // Étape 3: Confirmation du PIN
+            <View style={styles.contentContainer}>
+              <Text style={[styles.title, { color: colors.text }]}>
+                Confirmer votre code PIN
+              </Text>
+              <Text style={[styles.subtitle, { color: dark ? COLORS.grayscale400 : COLORS.grayscale700 }]}>
+                Saisissez à nouveau votre code PIN pour le confirmer
+              </Text>
+
+              <Animated.View
+                style={[
+                  styles.pinContainer,
+                  { transform: [{ translateX: shakeAnimation }] }
+                ]}
+              >
+                {confirmPin.map((digit, index) => (
+                  <TextInput
+                    key={index}
+                    ref={(ref) => {
+                      if (ref) confirmInputRefs.current[index] = ref;
+                    }}
+                    style={[
+                      styles.pinInput,
+                      {
+                        backgroundColor: dark ? COLORS.dark3 : COLORS.white,
+                        borderColor: digit 
+                          ? COLORS.primary 
+                          : dark ? COLORS.dark3 : COLORS.grayscale200,
+                        color: colors.text,
+                      }
+                    ]}
+                    value={digit}
+                    onChangeText={(text) => handlePinChange(text, index, true)}
+                    onKeyPress={(e) => handleKeyPress(e, index, true)}
+                    keyboardType="number-pad"
+                    maxLength={1}
+                    secureTextEntry
+                    selectTextOnFocus
+                    textContentType="oneTimeCode"
+                  />
+                ))}
+              </Animated.View>
+
+              <Button
+                title={isLoading ? 'Réinitialisation...' : 'Réinitialiser le code PIN'}
+                filled
+                onPress={handleConfirmPinSubmit}
+                style={styles.button}
+                disabled={isLoading || confirmPin.join('').length !== 4}
+              />
+
+                    <TouchableOpacity
+                style={styles.backToEmailContainer}
+                onPress={() => setCurrentStep('pin')}
+              >
+                <Text style={styles.backToEmailText}>
+                  Retour au nouveau PIN
+                </Text>
+                    </TouchableOpacity>
             </View>
           )}
         </ScrollView>
       </LinearGradient>
-    </SafeAreaView>
+        </SafeAreaView>
   );
 };
 
 const styles = StyleSheet.create({
-  area: {
-    flex: 1,
-  },
-  container: {
-    flex: 1,
+    area: {
+        flex: 1,
+    },
+    container: {
+        flex: 1,
   },
   header: {
     flexDirection: 'row',
@@ -294,8 +422,8 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     marginVertical: 32,
-  },
-  logo: {
+    },
+    logo: {
     width: 80,
     height: 80,
     tintColor: COLORS.primary,
@@ -303,9 +431,9 @@ const styles = StyleSheet.create({
   contentContainer: {
     paddingHorizontal: 24,
     paddingBottom: 32,
-  },
-  title: {
-    fontSize: 24,
+    },
+    title: {
+        fontSize: 24,
     fontFamily: 'bold',
     textAlign: 'center',
     marginBottom: 8,
@@ -319,8 +447,8 @@ const styles = StyleSheet.create({
   },
   inputContainer: {
     marginBottom: 16,
-  },
-  button: {
+    },
+    button: {
     marginTop: 24,
     marginBottom: 16,
   },
@@ -329,18 +457,39 @@ const styles = StyleSheet.create({
     marginTop: 16,
   },
   backToLoginText: {
-    fontSize: 16,
+        fontSize: 16,
     fontFamily: 'medium',
-    color: COLORS.primary,
+        color: COLORS.primary,
   },
   backToEmailContainer: {
-    alignItems: 'center',
+        alignItems: 'center',
     marginTop: 16,
   },
   backToEmailText: {
     fontSize: 16,
     fontFamily: 'medium',
     color: COLORS.primary,
+  },
+  pinContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingHorizontal: 20,
+    marginVertical: 32,
+  },
+  pinInput: {
+    width: 60,
+    height: 60,
+    borderRadius: 12,
+    borderWidth: 2,
+    fontSize: 24,
+    fontFamily: 'bold',
+    textAlign: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 3,
   },
 });
 

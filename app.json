@@ -1,25 +1,29 @@
 {
   "expo": {
-    "name": "Reasa",
-    "slug": "Reasa",
+    "name": "DODO",
+    "slug": "DODO",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
     "userInterfaceStyle": "automatic",
     "ios": {
-      "supportsTablet": true
+      "supportsTablet": true,
+      "bundleIdentifier": "com.macdy007.dodo",
+      "infoPlist": {
+        "ITSAppUsesNonExemptEncryption": false
+      }
     },
     "android": {
       "adaptiveIcon": {
         "foregroundImage": "./assets/images/adaptive-icon.png",
         "backgroundColor": "#ffffff"
       },
-      "package": "com.didier23.Reasa"
+      "package": "com.macdy007.dodo"
     },
     "web": {
       "favicon": "./assets/images/favicon.png"
     },
-    "scheme": "reasa",
+    "scheme": "dodo",
     "experiments": {
       "typedRoutes": true
     },
@@ -30,8 +34,15 @@
     "extra": {
       "eas": {
         "projectId": "377fa6f1-fa62-43c5-9fde-df7e8b8cb6ea"
-      }
+      },
+      "googleClientId": "771772054586-s470ghj1hbt6andof49n34vrou5jvi9r.apps.googleusercontent.com",
+      "googleClientIdIOS": "771772054586-5ovbaousmc1flsj6mvlnlf4lfek5n0v2.apps.googleusercontent.com"
     },
-    "owner": "macdy007"
+    "owner": "macdy007",
+    "plugins": [
+      "expo-web-browser",
+      "expo-router",
+      "expo-font"
+    ]
   }
 }

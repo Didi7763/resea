@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useRef, useState, useCallback } from 'react';
 import {
   StyleSheet,
   Text,
@@ -12,15 +12,21 @@ import {
   Platform,
   Modal,
   TouchableWithoutFeedback,
+  Alert,
+  ActivityIndicator
 } from "react-native";
-import MapView, { Marker } from "react-native-maps";
+import MapView, { Marker, Polyline, PROVIDER_GOOGLE } from "react-native-maps";
 import { Ionicons } from "@expo/vector-icons";
 import { useTheme } from '@/theme/ThemeProvider';
-import { mapDarkStyle, mapStandardStyle, markers } from '@/data/mapData';
 import { COLORS, icons, illustrations, SIZES } from '@/constants';
 import Button from '@/components/Button';
 import StarRating2 from '@/components/StarRating2';
 
+// Import de nos services et hooks
+import { useLocation } from '../../hooks/useLocation';
+import { Residence, Location, Route } from '../../types/map';
+import ResidenceService from '../../services/ResidenceService';
+import RouteService from '../../services/RouteService';
 
 const { width } = Dimensions.get("window");
 const CARD_HEIGHT = 112;
@@ -29,543 +35,651 @@ const SPACING_FOR_CARD_INSET = width * 0.1 - 10;
 
 const Explore = () => {
   const [isFavourite, setIsFavourite] = useState(false);
-  const [modalVisible, setModalVisible] = useState(true);
+  const [modalVisible, setModalVisible] = useState(false);
   const [directionModalVisible, setDirectionModalVisible] = useState(false);
-  const { dark } = useTheme();
+  const { dark, colors } = useTheme();
 
-  const initialMapState = {
-    markers,
-    region: {
-      latitude: 22.62938671242907,
-      longitude: 88.4354486029795,
-      latitudeDelta: 0.04864195044303443,
-      longitudeDelta: 0.040142817690068,
-    },
-  };
+  // États pour nos résidences
+  const [residences, setResidences] = useState<Residence[]>([]);
+  const [selectedResidence, setSelectedResidence] = useState<Residence | null>(null);
+  const [currentRoute, setCurrentRoute] = useState<Route | null>(null);
+  const [isLoadingResidences, setIsLoadingResidences] = useState(false);
+  const [isCalculatingRoute, setIsCalculatingRoute] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [isLocating, setIsLocating] = useState(false);
 
-  const [state, setState] = React.useState(initialMapState);
+  // Hook de géolocalisation
+  const {
+    location: userLocation,
+    permissionStatus,
+    isLoading: locationLoading,
+    error: locationError,
+    requestPermission,
+    getCurrentLocation,
+    startLocationUpdates,
+    stopLocationUpdates
+  } = useLocation();
 
-  let mapIndex = 0;
-  let mapAnimation = new Animated.Value(0);
+  // Services
+  const residenceService = ResidenceService.getInstance();
+  const routeService = RouteService.getInstance();
 
-  useEffect(() => {
-    mapAnimation.addListener(({ value }) => {
-      let index = Math.floor(value / CARD_WIDTH + 0.3);
-      if (index >= state.markers.length) {
-        index = state.markers.length - 1;
-      }
-      if (index <= 0) {
-        index = 0;
-      }
-
-      const regionTimeout = setTimeout(() => {
-        if (mapIndex !== index) {
-          mapIndex = index;
-          const { coordinate } = state.markers[index];
-          _map.current?.animateToRegion(
-            {
-              ...coordinate,
-              latitudeDelta: state.region.latitudeDelta,
-              longitudeDelta: state.region.longitudeDelta,
-            },
-            350
-          );
-        }
-      }, 10);
-
-      clearTimeout(regionTimeout);
-    });
-  }, [mapAnimation, state.markers, state.region.latitudeDelta, state.region.longitudeDelta]);
-
-  const interpolations = state.markers.map((marker, index) => {
-    const inputRange = [
-      (index - 1) * CARD_WIDTH,
-      index * CARD_WIDTH,
-      ((index + 1) * CARD_WIDTH),
-    ];
-
-    const scale = mapAnimation.interpolate({
-      inputRange,
-      outputRange: [1, 1.5, 1],
-      extrapolate: "clamp"
-    });
-
-    return { scale };
-  });
-
-  const onMarkerPress = (mapEventData: any) => {
-    const markerID = mapEventData._targetInst.return.key;
-
-    let x = markerID * CARD_WIDTH + markerID * 20;
-    if (Platform.OS === 'ios') {
-      x = x - SPACING_FOR_CARD_INSET;
-    }
-
-    _scrollView.current?.scrollTo({ x, y: 0, animated: true });
-  };
-
+  // Références
   const _map = useRef<MapView>(null);
   const _scrollView = useRef<ScrollView>(null);
 
-  const renderDirectionModal = () => {
-    return (
-      <Modal
-        animationType="slide"
-        transparent={true}
-        visible={directionModalVisible}>
-        <TouchableWithoutFeedback
-          onPress={() => setDirectionModalVisible(false)}>
-          <View style={styles.modalContainer}>
-            <View style={[styles.modalSubContainer,
-            {
-              height: 420,
-              width: SIZES.width * 0.8,
-              backgroundColor: dark ? COLORS.dark2 : COLORS.white,
-            }]}>
-              <View style={styles.backgroundIllustration}>
-                <Image
-                  source={illustrations.background}
-                  resizeMode='contain'
-                  style={styles.modalIllustration}
-                />
-                <Image
-                  source={icons.location2}
-                  resizeMode='contain'
-                  style={styles.editPencilIcon}
-                />
-              </View>
-              <Text style={styles.modalTitle}>You Have Arrived!</Text>
-              <Text style={[styles.modalSubtitle, {
-                color: dark ? COLORS.white : COLORS.black,
-              }]}>
-                We have arrived at apartment location.
-              </Text>
-              <Button
-                title="Okay"
-                filled
-                onPress={() => {
-                  setDirectionModalVisible(false)
-                }}
-                style={styles.successBtn}
-              />
-            </View>
-          </View>
-        </TouchableWithoutFeedback>
-      </Modal>
-    )
-  }
+  // Région initiale pour Cocody, Abidjan - Couvre toute la zone
+  const initialRegion = {
+    latitude: 5.3675,
+    longitude: -3.9850,
+    latitudeDelta: 0.08,
+    longitudeDelta: 0.08,
+  };
 
-  // Render modal
-  const renderModal = () => {
-    return (
-      <Modal
-        animationType="slide"
-        transparent={true}
-        visible={modalVisible}>
-        <TouchableWithoutFeedback
-          onPress={() => setModalVisible(false)}>
-          <View style={styles.modalContainer}>
-            <View style={[styles.modalSubContainer, {
-              backgroundColor: dark ? COLORS.dark2 : COLORS.white,
-            }]}>
-              <View style={styles.backgroundIllustration}>
-                <Image
-                  source={illustrations.background}
-                  resizeMode='contain'
-                  style={styles.modalIllustration}
-                />
-                <Image
-                  source={icons.location2}
-                  resizeMode='contain'
-                  style={styles.editPencilIcon}
-                />
+  const [region, setRegion] = useState(initialRegion);
+
+  // Charger les résidences au démarrage
+  useEffect(() => {
+    loadResidences();
+  }, []);
+
+  // Démarrer les mises à jour de position quand les permissions sont accordées
+  useEffect(() => {
+    if (permissionStatus?.granted && userLocation) {
+      startLocationUpdates();
+      // Centrer la carte sur la position de l'utilisateur
+      setRegion({
+        latitude: userLocation.latitude,
+        longitude: userLocation.longitude,
+        latitudeDelta: 0.05,
+        longitudeDelta: 0.05,
+      });
+    }
+  }, [permissionStatus?.granted, userLocation]);
+
+  // Charger les résidences
+  const loadResidences = async () => {
+    try {
+      setIsLoadingResidences(true);
+      
+      const residencesData = await residenceService.getAllResidences();
+      setResidences(residencesData);
+      
+    } catch (error) {
+      console.error('❌ Erreur lors du chargement des résidences:', error);
+      Alert.alert('Erreur', 'Impossible de charger les résidences');
+    } finally {
+      setIsLoadingResidences(false);
+    }
+  };
+
+  // Gérer la sélection d'une résidence
+  const handleResidenceSelect = useCallback(async (residence: Residence) => {
+    try {
+      setSelectedResidence(residence);
+      
+      // Centrer la carte sur la résidence sélectionnée
+      if (_map.current) {
+        _map.current.animateToRegion({
+          latitude: residence.location.latitude,
+          longitude: residence.location.longitude,
+          latitudeDelta: 0.01,
+          longitudeDelta: 0.01,
+        });
+      }
+
+      // Calculer l'itinéraire si l'utilisateur a une position
+      if (userLocation) {
+        await calculateRouteToResidence(residence);
+      }
+    } catch (error) {
+      console.error('❌ Erreur lors de la sélection de la résidence:', error);
+    }
+  }, [userLocation]);
+
+  // Calculer l'itinéraire vers une résidence
+  const calculateRouteToResidence = async (residence: Residence) => {
+    if (!userLocation) {
+      Alert.alert('Position requise', 'Votre position est nécessaire pour calculer l\'itinéraire');
+      return;
+    }
+
+    try {
+      setIsCalculatingRoute(true);
+
+      const route = await routeService.calculateRoute(userLocation, residence.location);
+      
+      if (route) {
+        setCurrentRoute(route);
+      } else {
+        Alert.alert('Erreur', 'Impossible de calculer l\'itinéraire');
+      }
+    } catch (error) {
+      console.error('❌ Erreur lors du calcul d\'itinéraire:', error);
+      Alert.alert('Erreur', 'Impossible de calculer l\'itinéraire');
+    } finally {
+      setIsCalculatingRoute(false);
+    }
+  };
+
+  // Effacer l'itinéraire
+  const clearRoute = () => {
+    setCurrentRoute(null);
+    setSelectedResidence(null);
+  };
+
+  // Centrer la carte sur la position de l'utilisateur
+  const centerOnUserLocation = async () => {
+    try {
+      setIsLocating(true);
+      
+      // Si on n'a pas encore la position, on la récupère
+      if (!userLocation) {
+        const currentLocation = await getCurrentLocation();
+        if (currentLocation) {
+        }
+      }
+      
+      // Centrer la carte sur la position actuelle
+      if (_map.current && (userLocation || await getCurrentLocation())) {
+        const location = userLocation || await getCurrentLocation();
+        if (location) {
+          _map.current.animateToRegion({
+            latitude: location.latitude,
+            longitude: location.longitude,
+            latitudeDelta: 0.02,
+            longitudeDelta: 0.02,
+          }, 1000);
+        }
+      } else {
+        Alert.alert('Position', 'Votre position n\'est pas disponible. Vérifiez les permissions de localisation.');
+      }
+    } catch (error) {
+      console.error('❌ Erreur lors du centrage:', error);
+      Alert.alert('Erreur', 'Impossible de centrer la carte sur votre position');
+    } finally {
+      setIsLocating(false);
+    }
+  };
+
+  // Gérer la demande de permission
+  const handleRequestPermission = async () => {
+    await requestPermission();
+    setModalVisible(false);
+  };
+
+  // Décoder la polyline pour l'affichage
+  const getRouteCoordinates = (): Location[] => {
+    if (!currentRoute?.polyline) return [];
+    return routeService.decodePolyline(currentRoute.polyline);
+  };
+
+  // Filtrer les résidences selon la recherche
+  const filteredResidences = residences.filter(residence =>
+    residence.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    residence.address?.toLowerCase().includes(searchQuery.toLowerCase())
+  );
+
+  // Rendu de la searchbar
+  const renderSearchBar = () => (
+    <View style={[styles.searchBarContainer, { backgroundColor: dark ? COLORS.dark2 : COLORS.secondaryWhite }]}>
+      <Ionicons name="search" size={18} color={COLORS.gray} />
+      <TextInput
+        style={[styles.searchInput, { color: colors.text }]}
+        placeholder="Rechercher une résidence..."
+        placeholderTextColor={COLORS.gray}
+        value={searchQuery}
+        onChangeText={setSearchQuery}
+      />
+      {searchQuery.length > 0 && (
+        <TouchableOpacity onPress={() => setSearchQuery('')} style={styles.clearButton}>
+          <Ionicons name="close-circle" size={18} color={COLORS.gray} />
+        </TouchableOpacity>
+      )}
+    </View>
+  );
+
+  // Rendu des cartes de résidences
+  const renderResidenceCards = () => (
+    <ScrollView
+      ref={_scrollView}
+      horizontal
+      pagingEnabled
+      scrollEventThrottle={1}
+      showsHorizontalScrollIndicator={false}
+      snapToInterval={CARD_WIDTH + 20}
+      contentContainerStyle={styles.scrollViewContent}
+      decelerationRate="fast"
+    >
+      {filteredResidences.map((residence, index) => (
+        <TouchableOpacity
+          key={residence.id}
+          style={[styles.card, {
+            backgroundColor: dark ? COLORS.dark2 : COLORS.white,
+            borderColor: selectedResidence?.id === residence.id ? COLORS.primary : 'transparent'
+          }]}
+          onPress={() => handleResidenceSelect(residence)}
+        >
+          <View style={styles.cardImageContainer}>
+            {residence.images && residence.images.length > 0 ? (
+              <Image
+                source={{ uri: residence.images[0] }}
+                style={styles.cardImage}
+                resizeMode="cover"
+              />
+            ) : (
+              <View style={[styles.cardImagePlaceholder, { backgroundColor: COLORS.primary + '20' }]}>
+                <Ionicons name="home" size={40} color={COLORS.primary} />
               </View>
-              <Text style={styles.modalTitle}>Enable Location</Text>
-              <Text style={[styles.modalSubtitle, {
-                color: dark ? COLORS.white : COLORS.black,
-              }]}>
-                We need location access to find the nearest apartment around you.
-              </Text>
-              <Button
-                title="Enable location"
-                filled
-                onPress={() => {
-                  setModalVisible(false)
-                }}
-                style={styles.successBtn}
+            )}
+            <TouchableOpacity style={styles.favouriteButton}>
+              <Ionicons 
+                name={isFavourite ? "heart" : "heart-outline"} 
+                size={20} 
+                color={isFavourite ? COLORS.error : COLORS.gray} 
               />
-              <Button
-                title="Cancel"
-                onPress={() => {
-                  setModalVisible(false)
-                }}
-                textColor={dark ? COLORS.white : COLORS.primary}
-                style={{
-                  width: "100%",
-                  marginTop: 12,
-                  borderRadius: 32,
-                  backgroundColor: dark ? COLORS.dark3 : COLORS.tansparentPrimary,
-                  borderColor: dark ? COLORS.dark3 : COLORS.tansparentPrimary
-                }}
-              />
-            </View>
+            </TouchableOpacity>
           </View>
-        </TouchableWithoutFeedback>
-      </Modal>
-    )
-  }
+          
+          <View style={styles.cardContent}>
+            <Text style={[styles.cardTitle, { color: colors.text }]}>
+              {residence.name}
+            </Text>
+            <Text style={[styles.cardLocation, { color: colors.textSecondary }]}>
+              {residence.address}
+            </Text>
+            <View style={styles.cardDetails}>
+              <View style={styles.cardDetail}>
+                <Ionicons name="bed-outline" size={16} color={COLORS.primary} />
+                <Text style={[styles.cardDetailText, { color: colors.textSecondary }]}>
+                  {residence.rooms} chambres
+                </Text>
+              </View>
+              {residence.surface && (
+                <View style={styles.cardDetail}>
+                  <Ionicons name="resize-outline" size={16} color={COLORS.primary} />
+                  <Text style={[styles.cardDetailText, { color: colors.textSecondary }]}>
+                    {residence.surface}m²
+                  </Text>
+                </View>
+              )}
+            </View>
+            {residence.price && (
+              <Text style={[styles.cardPrice, { color: COLORS.primary }]}>
+                {residence.price.toLocaleString()} FCFA
+              </Text>
+            )}
+          </View>
+        </TouchableOpacity>
+      ))}
+    </ScrollView>
+  );
+
+  // Rendu du modal de permission
+  const renderPermissionModal = () => (
+    <Modal
+      animationType="slide"
+      transparent={true}
+      visible={modalVisible}>
+      <TouchableWithoutFeedback onPress={() => setModalVisible(false)}>
+        <View style={styles.modalContainer}>
+          <View style={[styles.modalSubContainer, {
+            backgroundColor: dark ? COLORS.dark2 : COLORS.white,
+          }]}>
+            <View style={styles.backgroundIllustration}>
+              <Image
+                source={illustrations.background}
+                resizeMode='contain'
+                style={styles.modalIllustration}
+              />
+              <Ionicons name="location-outline" size={40} color={COLORS.primary} style={styles.editPencilIcon} />
+            </View>
+            <Text style={[styles.modalTitle, { color: colors.text }]}>Activer la localisation</Text>
+            <Text style={[styles.modalSubtitle, { color: colors.textSecondary }]}>
+              Nous avons besoin d'accéder à votre position pour trouver les résidences les plus proches.
+            </Text>
+            <Button
+              title="Activer la localisation"
+              filled
+              onPress={handleRequestPermission}
+              style={styles.successBtn}
+            />
+            <Button
+              title="Annuler"
+              onPress={() => setModalVisible(false)}
+              style={styles.cancelBtn}
+            />
+          </View>
+        </View>
+      </TouchableWithoutFeedback>
+    </Modal>
+  );
 
   return (
-    <View style={styles.container}>
-      <MapView
-        ref={_map}
-        initialRegion={state.region}
-        style={styles.container}
-        customMapStyle={dark ? mapDarkStyle : mapStandardStyle}
-      >
-        {state.markers.map((marker, index) => {
-          const scaleStyle = {
-            transform: [
-              {
-                scale: interpolations[index].scale,
-              },
-            ],
-          };
-          return (
-            <Marker key={index} coordinate={marker.coordinate} onPress={(e) => onMarkerPress(e)}>
-              <Animated.View style={[styles.markerWrap]}>
-                <Animated.Image
-                  source={icons.location4}
-                  style={[styles.marker, scaleStyle]}
-                  resizeMode="cover"
-                />
-              </Animated.View>
-            </Marker>
-          );
-        })}
-      </MapView>
-
-      <View style={[styles.searchBox, {
-        backgroundColor: dark ? COLORS.dark1 : COLORS.white,
-      }]}>
-        <TextInput
-          placeholder="Search apartment, locations..."
-          placeholderTextColor={dark ? COLORS.white : "#000"}
-          autoCapitalize="none"
-          style={{
-            flex: 1,
-            padding: 0,
-            fontFamily: "medium"
-          }}
-        />
-        <TouchableOpacity
-          onPress={() => setDirectionModalVisible(true)}
-          style={{
-            width: 58,
-            height: 50,
-            backgroundColor: COLORS.primary,
-            borderTopRightRadius: 25,
-            borderBottomRightRadius: 25,
-            alignItems: "center",
-            justifyContent: "center",
-            top: -10,
-            right: -10
-          }}>
-          <Ionicons name="search" size={20} color={COLORS.white} />
-        </TouchableOpacity>
+    <View style={[styles.container, { backgroundColor: colors.background }]}>
+      {/* Header avec searchbar */}
+      <View style={styles.header}>
+        <Text style={[styles.headerTitle, { color: colors.text }]}>
+          Explorer
+        </Text>
+        {renderSearchBar()}
       </View>
-      <ScrollView
-        horizontal
-        scrollEventThrottle={1}
-        showsHorizontalScrollIndicator={false}
-        style={styles.chipsScrollView}
-        contentInset={{ // iOS only
-          top: 0,
-          left: 0,
-          bottom: 0,
-          right: 20
-        }}
-        contentContainerStyle={{
-          paddingRight: Platform.OS === 'android' ? 20 : 0
-        }}
-      >
 
-      </ScrollView>
-      <Animated.ScrollView
-        ref={_scrollView}
-        horizontal
-        pagingEnabled
-        scrollEventThrottle={1}
-        showsHorizontalScrollIndicator={false}
-        snapToInterval={CARD_WIDTH + 20}
-        snapToAlignment="center"
-        style={styles.scrollView}
-        contentInset={{
-          top: 0,
-          left: SPACING_FOR_CARD_INSET,
-          bottom: 0,
-          right: SPACING_FOR_CARD_INSET
-        }}
-        contentContainerStyle={{
-          paddingHorizontal: Platform.OS === 'android' ? SPACING_FOR_CARD_INSET : 0
-        }}
-        onScroll={Animated.event(
-          [
-            {
-              nativeEvent: {
-                contentOffset: {
-                  x: mapAnimation,
-                }
-              },
-            },
-          ],
-          { useNativeDriver: true }
-        )}
-      >
-        {state.markers.map((marker, index) => (
-          <View style={[styles.card, {
-            backgroundColor: dark ? COLORS.dark1 : COLORS.white,
-          }]} key={index}>
-            <Image
-              source={marker.image}
-              style={styles.cardImage}
-              resizeMode="cover"
-            />
-            <TouchableOpacity
-              onPress={() => {
-                setIsFavourite(!isFavourite);
-                setDirectionModalVisible(true);
-              }}
-              style={{
-                position: "absolute",
-                top: 12,
-                right: 12
-              }}
+      {/* Carte */}
+      <View style={styles.mapContainer}>
+        <MapView
+          ref={_map}
+          style={styles.map}
+          provider={PROVIDER_GOOGLE}
+          initialRegion={initialRegion}
+          region={region}
+          showsUserLocation={true}
+          showsMyLocationButton={false}
+          showsCompass={true}
+          showsScale={true}
+        >
+          {/* Marqueurs des résidences */}
+          {filteredResidences.map((residence) => (
+            <Marker
+              key={residence.id}
+              coordinate={residence.location}
+              title={residence.name}
+              description={residence.address}
+              onPress={() => handleResidenceSelect(residence)}
             >
-              <Ionicons name={isFavourite ? "heart" : "heart-outline"} size={20} color={isFavourite ? COLORS.red : dark ? COLORS.white : COLORS.black} />
-            </TouchableOpacity>
-            <View style={styles.textContent}>
-              <Text numberOfLines={1} style={[styles.cardtitle, {
-                color: dark ? COLORS.white : COLORS.black,
-              }]}>{marker.name}</Text>
-              <StarRating2 ratings={marker.rating} reviews={marker.reviews} />
-              <Text numberOfLines={1} style={[styles.cardDescription, {
-                color: dark ? COLORS.grayscale200 : "#444",
-              }]}>{marker.description}</Text>
-              <Text style={styles.price}>{marker.price}</Text>
-            </View>
+              <View style={[
+                styles.markerContainer,
+                selectedResidence?.id === residence.id && styles.selectedMarker
+              ]}>
+                <Ionicons 
+                  name="home" 
+                  size={20} 
+                  color={selectedResidence?.id === residence.id ? 'white' : COLORS.primary} 
+                />
+              </View>
+            </Marker>
+          ))}
+
+          {/* Itinéraire */}
+          {currentRoute && (
+            <Polyline
+              coordinates={getRouteCoordinates()}
+              strokeColor={COLORS.error}
+              strokeWidth={4}
+              lineDashPattern={[1]}
+            />
+          )}
+        </MapView>
+
+        {/* Bouton de localisation */}
+        <TouchableOpacity 
+          style={[styles.locationButton, isLocating && styles.locationButtonActive]}
+          onPress={centerOnUserLocation}
+          activeOpacity={0.7}
+          disabled={isLocating}
+        >
+          {isLocating ? (
+            <ActivityIndicator size="small" color={COLORS.primary} />
+          ) : (
+            <Ionicons name="locate" size={22} color={COLORS.primary} />
+          )}
+        </TouchableOpacity>
+
+        {/* Indicateur de chargement */}
+        {(locationLoading || isLoadingResidences || isCalculatingRoute) && (
+          <View style={styles.loadingOverlay}>
+            <ActivityIndicator size="large" color={COLORS.primary} />
+            <Text style={[styles.loadingText, { color: colors.text }]}>
+              {locationLoading ? 'Localisation...' : 
+               isLoadingResidences ? 'Chargement des résidences...' : 
+               'Calcul d\'itinéraire...'}
+            </Text>
           </View>
-        ))}
-      </Animated.ScrollView>
-      {renderModal()}
-      {renderDirectionModal()}
+        )}
+      </View>
+
+      {/* Cartes des résidences */}
+      <View style={styles.cardsContainer}>
+        {renderResidenceCards()}
+      </View>
+
+      {/* Modal de permission */}
+      {renderPermissionModal()}
+
+      {/* Messages d'erreur */}
+      {locationError && (
+        <View style={[styles.errorPanel, { backgroundColor: COLORS.error + '20' }]}>
+          <Ionicons name="warning-outline" size={20} color={COLORS.error} />
+          <Text style={[styles.errorText, { color: COLORS.error }]}>
+            {locationError}
+          </Text>
+        </View>
+      )}
     </View>
   );
 };
-
-
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
   },
-  searchBox: {
-    position: 'absolute',
-    marginTop: Platform.OS === 'ios' ? 8 : 20,
-    flexDirection: "row",
-    backgroundColor: '#fff',
-    width: '90%',
-    alignSelf: 'center',
-    borderRadius: 25,
-    padding: 10,
-    shadowColor: '#ccc',
-    shadowOffset: { width: 0, height: 3 },
-    shadowOpacity: 0.5,
-    shadowRadius: 5,
-    elevation: 10,
-    top: 52,
-    height: 50
+  header: {
+    paddingHorizontal: 15,
+    paddingTop: 10,
+    paddingBottom: 10,
+    backgroundColor: 'rgba(0,0,0,0.8)',
   },
-  chipsScrollView: {
-    position: 'absolute',
-    top: Platform.OS === 'ios' ? 90 : 80,
-    paddingHorizontal: 10
+  headerTitle: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    marginBottom: 10,
+    color: 'white',
   },
-  chipsIcon: {
-    marginRight: 5,
-  },
-  chipsItem: {
-    flexDirection: "row",
-    backgroundColor: '#fff',
+  searchBarContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 12,
+    paddingVertical: 10,
     borderRadius: 20,
-    padding: 8,
-    paddingHorizontal: 20,
-    marginHorizontal: 10,
-    height: 35,
-    shadowColor: '#ccc',
-    shadowOffset: { width: 0, height: 3 },
-    shadowOpacity: 0.5,
-    shadowRadius: 5,
-    elevation: 10,
+    borderWidth: 1,
+    borderColor: COLORS.gray + '30',
+    backgroundColor: 'rgba(255,255,255,0.9)',
   },
-  scrollView: {
-    position: "absolute",
-    bottom: 0,
+  searchInput: {
+    flex: 1,
+    fontSize: 14,
+    marginLeft: 8,
+  },
+  clearButton: {
+    padding: 2,
+  },
+  mapContainer: {
+    flex: 1,
+    position: 'relative',
+    marginBottom: CARD_HEIGHT + 100, // Espace pour les cartes + barre de navigation
+  },
+  map: {
+    flex: 1,
+  },
+  locationButton: {
+    position: 'absolute',
+    top: 15,
+    right: 15,
+    backgroundColor: 'white',
+    borderRadius: 22,
+    padding: 10,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.3,
+    shadowRadius: 4.65,
+    elevation: 8,
+    borderWidth: 1,
+    borderColor: COLORS.primary + '20',
+  },
+  locationButtonActive: {
+    backgroundColor: COLORS.primary + '10',
+    borderColor: COLORS.primary,
+  },
+  loadingOverlay: {
+    position: 'absolute',
+    top: 0,
     left: 0,
     right: 0,
-    paddingVertical: 10,
-  },
-  endPadding: {
-    paddingRight: width - CARD_WIDTH,
-  },
-  card: {
-    elevation: 2,
-    backgroundColor: "#FFF",
-    marginHorizontal: 10,
-    shadowColor: "#000",
-    shadowRadius: 5,
-    shadowOpacity: 0.3,
-    height: CARD_HEIGHT,
-    width: CARD_WIDTH,
-    overflow: "hidden",
-    marginBottom: 92,
-    flexDirection: "row",
-    borderRadius: 10,
-    paddingHorizontal: 10,
-    zIndex: 99999
-  },
-  cardImage: {
-    width: 92,
-    height: 92,
-    alignSelf: "center",
-    borderRadius: 15
-  },
-  textContent: {
-    flex: 2,
-    padding: 10,
-  },
-  cardtitle: {
-    fontSize: 16,
-    fontFamily: "bold",
-    marginBottom: 7,
-    color: COLORS.black
-  },
-  cardDescription: {
-    fontSize: 12,
-    color: "#444",
-    marginTop: 12
-  },
-  markerWrap: {
-    alignItems: "center",
-    justifyContent: "center",
-    width: 50,
-    height: 50,
-  },
-  marker: {
-    width: 30,
-    height: 30,
-    tintColor: COLORS.primary,
-  },
-  button: {
-    alignItems: 'center',
-    marginTop: 5
-  },
-  signIn: {
-    width: '100%',
-    padding: 5,
+    bottom: 0,
+    backgroundColor: 'rgba(0,0,0,0.5)',
     justifyContent: 'center',
     alignItems: 'center',
-    borderRadius: 3
   },
-  textSign: {
-    fontSize: 14,
-    fontWeight: 'bold'
-  },
-  categoryIcon: {
-    height: 18,
-    width: 18,
-    tintColor: COLORS.black,
-    marginRight: 8
-  },
-  typeContainer: {
-    flexDirection: "row",
-    alignItems: "center",
-    marginTop: 6
-  },
-  type: {
-    fontSize: 12,
-    fontFamily: "bold",
-    color: COLORS.primary,
-    marginLeft: 12
-  },
-  price: {
-    fontSize: 14,
-    fontFamily: "bold",
-    color: COLORS.red,
-    marginTop: 6
-  },
-  modalTitle: {
-    fontSize: 24,
-    fontFamily: "bold",
-    color: COLORS.primary,
-    textAlign: "center",
-    marginVertical: 12
-  },
-  modalSubtitle: {
+  loadingText: {
+    marginTop: 10,
     fontSize: 16,
-    fontFamily: "regular",
-    color: COLORS.black,
-    textAlign: "center",
-    marginVertical: 12
+  },
+  markerContainer: {
+    backgroundColor: 'white',
+    borderRadius: 20,
+    padding: 8,
+    borderWidth: 2,
+    borderColor: COLORS.primary,
+  },
+  selectedMarker: {
+    backgroundColor: COLORS.primary,
+  },
+  cardsContainer: {
+    position: 'absolute',
+    bottom: 80, // Au-dessus de la barre de navigation
+    left: 0,
+    right: 0,
+    height: CARD_HEIGHT + 20,
+  },
+  scrollViewContent: {
+    paddingHorizontal: 10,
+  },
+  card: {
+    width: CARD_WIDTH,
+    height: CARD_HEIGHT,
+    marginHorizontal: 10,
+    borderRadius: 15,
+    borderWidth: 2,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.25,
+    shadowRadius: 3.84,
+    elevation: 5,
+    flexDirection: 'row',
+    overflow: 'hidden',
+  },
+  cardImageContainer: {
+    width: 80,
+    height: '100%',
+    position: 'relative',
+  },
+  cardImage: {
+    width: '100%',
+    height: '100%',
+  },
+  cardImagePlaceholder: {
+    width: '100%',
+    height: '100%',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  favouriteButton: {
+    position: 'absolute',
+    top: 8,
+    right: 8,
+    backgroundColor: 'white',
+    borderRadius: 15,
+    padding: 5,
+  },
+  cardContent: {
+    flex: 1,
+    padding: 12,
+    justifyContent: 'space-between',
+  },
+  cardTitle: {
+    fontSize: 16,
+    fontWeight: '600',
+    marginBottom: 4,
+  },
+  cardLocation: {
+    fontSize: 12,
+    marginBottom: 8,
+  },
+  cardDetails: {
+    flexDirection: 'row',
+    marginBottom: 8,
+  },
+  cardDetail: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginRight: 15,
+  },
+  cardDetailText: {
+    fontSize: 12,
+    marginLeft: 4,
+  },
+  cardPrice: {
+    fontSize: 14,
+    fontWeight: '600',
   },
   modalContainer: {
     flex: 1,
-    alignItems: "center",
-    justifyContent: "center",
-    backgroundColor: "rgba(0,0,0,0.56)"
+    backgroundColor: 'rgba(0,0,0,0.5)',
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   modalSubContainer: {
-    height: 520,
-    width: SIZES.width * 0.9,
-    backgroundColor: COLORS.white,
-    borderRadius: 12,
-    alignItems: "center",
-    justifyContent: "center",
-    padding: 16
-  },
-  modalIllustration: {
-    height: 180,
-    width: 180,
-    marginVertical: 22
-  },
-  successBtn: {
-    width: "100%",
-    marginTop: 12,
-    borderRadius: 32
-  },
-  receiptBtn: {
-    width: "100%",
-    marginTop: 12,
-    borderRadius: 32,
-    backgroundColor: COLORS.tansparentPrimary,
-    borderColor: COLORS.tansparentPrimary
-  },
-  editPencilIcon: {
-    width: 42,
-    height: 42,
-    tintColor: COLORS.white,
-    zIndex: 99999,
-    position: "absolute",
-    top: 54,
-    left: 58,
+    borderRadius: 20,
+    padding: 20,
+    alignItems: 'center',
+    width: SIZES.width * 0.8,
   },
   backgroundIllustration: {
-    height: 150,
-    width: 150,
-    marginVertical: 22,
-    alignItems: "center",
-    justifyContent: "center"
+    position: 'relative',
+    marginBottom: 20,
+  },
+  modalIllustration: {
+    width: 100,
+    height: 100,
+  },
+  editPencilIcon: {
+    position: 'absolute',
+    top: 30,
+    right: 30,
+  },
+  modalTitle: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    marginBottom: 10,
+    textAlign: 'center',
+  },
+  modalSubtitle: {
+    fontSize: 14,
+    textAlign: 'center',
+    marginBottom: 20,
+    lineHeight: 20,
+  },
+  successBtn: {
+    marginBottom: 10,
+  },
+  cancelBtn: {
+    backgroundColor: 'transparent',
+  },
+  errorPanel: {
+    position: 'absolute',
+    top: 100,
+    left: 20,
+    right: 20,
+    padding: 15,
+    borderRadius: 10,
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  errorText: {
+    fontSize: 14,
+    marginLeft: 10,
+    flex: 1,
   },
 });
 
-export default Explore
+export default Explore;

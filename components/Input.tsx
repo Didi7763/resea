@@ -1,61 +1,79 @@
-import React, { useState, FC } from 'react';
+import React, { useState, useCallback, useMemo, useRef, forwardRef } from 'react';
 import { View, Text, StyleSheet, TextInput, TextInputProps, Image, ImageSourcePropType } from 'react-native';
 import { COLORS, SIZES } from '../constants';
 import { useTheme } from '../theme/ThemeProvider';
 
-interface InputProps extends TextInputProps {
+interface InputProps extends Omit<TextInputProps, 'onBlur'> {
   id: string;
   icon?: string;
   errorText?: string[];
   onInputChanged: (id: string, text: string) => void;
+  onBlur?: (id: string, text: string) => void;
 }
 
-const Input: FC<InputProps> = (props) => {
+const Input = forwardRef<TextInput, InputProps>((props, ref) => {
   const [isFocused, setIsFocused] = useState(false);
   const { dark } = useTheme();
+  const { id, onInputChanged, value, onBlur } = props;
+  const textInputRef = useRef<TextInput>(null);
 
-  const handleFocus = () => {
+  const handleFocus = useCallback(() => {
+    console.log(`🎯 [${id}] FOCUS - Champ reçoit le focus`);
     setIsFocused(true);
-  };
+  }, [id]);
 
-  const handleBlur = () => {
+  const handleBlur = useCallback(() => {
+    console.log(`🎯 [${id}] BLUR - Champ perd le focus`);
     setIsFocused(false);
-  };
+    if (onBlur && value !== undefined) {
+      onBlur(id, value);
+    }
+  }, [id, value, onBlur]);
 
-  const onChangeText = (text: string) => {
-    props.onInputChanged(props.id, text);
-  };
+  const onChangeText = useCallback((text: string) => {
+    console.log(`⌨️ [${id}] onChangeText appelé avec:`, text);
+    onInputChanged(id, text);
+  }, [id, onInputChanged]);
+
+  const inputContainerStyle = useMemo(() => [
+    styles.inputContainer,
+    {
+      borderColor: isFocused ? COLORS.primary : dark ? COLORS.dark2 : COLORS.grayscale200,
+      backgroundColor: dark ? COLORS.dark2 : COLORS.white,
+    },
+  ], [isFocused, dark]);
+
+  const iconStyle = useMemo(() => [
+    styles.icon,
+    {
+      tintColor: isFocused ? COLORS.primary : '#BCBCBC',
+    },
+  ], [isFocused]);
+
+  const inputStyle = useMemo(() => [
+    styles.input, 
+    { color: dark ? COLORS.white : COLORS.black }
+  ], [dark]);
 
   return (
     <View style={styles.container}>
-      <View
-        style={[
-          styles.inputContainer,
-          {
-            borderColor: isFocused ? COLORS.primary : dark ? COLORS.dark2 : COLORS.grayscale500,
-            backgroundColor: isFocused ? COLORS.tansparentPrimary : dark ? COLORS.dark2 : COLORS.grayscale500,
-          },
-        ]}
-      >
+      <View style={inputContainerStyle}>
         {props.icon && (
           <Image
             source={props.icon as ImageSourcePropType}
-            style={[
-              styles.icon,
-              {
-                tintColor: isFocused ? COLORS.primary : '#BCBCBC',
-              },
-            ]}
+            style={iconStyle}
           />
         )}
         <TextInput
+          ref={ref || textInputRef}
           {...props}
+          value={value}
           onChangeText={onChangeText}
           onFocus={handleFocus}
           onBlur={handleBlur}
-          style={[styles.input, { color: dark ? COLORS.white : COLORS.black }]}
+          style={inputStyle}
           placeholder={props.placeholder}
-          placeholderTextColor={props.placeholderTextColor}
+          placeholderTextColor={props.placeholderTextColor || (dark ? COLORS.grayscale400 : COLORS.grayscale500)}
           autoCapitalize="none" />
       </View>
       {props.errorText && props.errorText.length > 0 && (
@@ -65,7 +83,9 @@ const Input: FC<InputProps> = (props) => {
       )}
     </View>
   );
-};
+});
+
+Input.displayName = 'Input';
 
 const styles = StyleSheet.create({
   container: {

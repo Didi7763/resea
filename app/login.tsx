@@ -193,7 +193,7 @@ const Login = () => {
           setIsLoading(false);
           Alert.alert(
             'Connexion réussie',
-            'Bienvenue dans REASA !',
+            'Bienvenue dans DODO !',
             [{
               text: 'Continuer',
               onPress: () => router.replace('/(tabs)')
@@ -285,7 +285,7 @@ const Login = () => {
                 <View style={styles.formContainer}>
                   <View style={styles.titleContainer}>
                     <Text style={[styles.title, { color: colors.text }]}>
-                      Connectez-vous à REASA
+                      Connectez-vous à DODO
                     </Text>
                     <Text style={[styles.subtitle, { color: dark ? COLORS.grayscale400 : COLORS.grayscale700 }]}>
                       Saisissez votre numéro de téléphone pour continuer

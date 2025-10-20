@@ -8,20 +8,25 @@ interface SocialButtonV2Props {
     icon: string;
     onPress: () => void;
     iconStyles?: StyleProp<ImageStyle>;
+    style?: StyleProp<ViewStyle>;
+    disabled?: boolean;
 }
 
-const SocialButtonV2: React.FC<SocialButtonV2Props> = ({ title, icon, onPress, iconStyles }) => {
+const SocialButtonV2: React.FC<SocialButtonV2Props> = ({ title, icon, onPress, iconStyles, style, disabled }) => {
     const { dark } = useTheme();
 
     return (
         <TouchableOpacity
             onPress={onPress}
+            disabled={disabled}
             style={[
                 styles.container,
                 {
                     backgroundColor: dark ? COLORS.dark2 : COLORS.white,
                     borderColor: dark ? COLORS.dark2 : COLORS.grayscale200,
-                }
+                    opacity: disabled ? 0.6 : 1,
+                },
+                style
             ]}>
             <Image
                 source={icon as ImageSourcePropType}

@@ -172,7 +172,7 @@ const SplashScreen = () => {
               },
             ]}
           >
-            <Text style={styles.appName}>REASA</Text>
+            <Text style={styles.appName}>DODO</Text>
             <Text style={styles.tagline}>Votre nouveau chez-vous vous attend</Text>
           </Animated.View>
 

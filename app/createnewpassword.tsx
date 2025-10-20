@@ -1,4 +1,4 @@
-import React, { useState, useCallback, useReducer, useEffect } from 'react';
+import React, { useState, useRef } from 'react';
 import {
   View,
   Text,
@@ -6,8 +6,7 @@ import {
   TouchableOpacity,
   Image,
   Alert,
-  KeyboardAvoidingView,
-  Platform,
+  TextInput,
   Animated,
   ScrollView
 } from 'react-native';
@@ -16,198 +15,125 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 
-import { COLORS, icons, illustrations } from '../constants';
+import { COLORS, illustrations } from '../constants';
 import { useTheme } from '../theme/ThemeProvider';
 import Button from '../components/Button';
-import Input from '../components/Input';
-import { validateInput } from '../utils/actions/formActions';
-import { reducer } from '../utils/reducers/formReducers';
 
-interface FormState {
-  inputValues: {
-    password: string;
-    confirmPassword: string;
-  };
-  inputValidities: {
-    password: string | undefined;
-    confirmPassword: string | undefined;
-  };
-  formIsValid: boolean;
-}
-
-const initialState: FormState = {
-  inputValues: {
-    password: '',
-    confirmPassword: '',
-  },
-  inputValidities: {
-    password: undefined,
-    confirmPassword: undefined,
-  },
-  formIsValid: false,
-};
-
-const CreateNewPassword = () => {
+const CreateNewPin = () => {
   const router = useRouter();
   const { colors, dark } = useTheme();
-  const [formState, dispatchFormState] = useReducer(reducer, initialState);
   const [isLoading, setIsLoading] = useState(false);
-  const [showPassword, setShowPassword] = useState(false);
-  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
-  const [passwordStrength, setPasswordStrength] = useState(0);
+  const [currentStep, setCurrentStep] = useState<'pin' | 'confirmPin'>('pin');
+  const [newPin, setNewPin] = useState(['', '', '', '']);
+  const [confirmPin, setConfirmPin] = useState(['', '', '', '']);
+  const inputRefs = useRef<(TextInput | null)[]>([]);
+  const confirmInputRefs = useRef<(TextInput | null)[]>([]);
+  const shakeAnimation = useRef(new Animated.Value(0)).current;
 
-  // Animation
-  const fadeAnimation = React.useRef(new Animated.Value(0)).current;
-  const slideAnimation = React.useRef(new Animated.Value(50)).current;
-
-  useEffect(() => {
-  // Start animations
-  Animated.parallel([
-    Animated.timing(fadeAnimation, {
-      toValue: 1,
-      duration: 800,
-      useNativeDriver: true,
-    }),
-    Animated.timing(slideAnimation, {
-      toValue: 0,
-      duration: 600,
-      useNativeDriver: true,
-    }),
+  // Animation de shake pour les erreurs PIN
+  const shakePin = () => {
+    Animated.sequence([
+      Animated.timing(shakeAnimation, { toValue: 10, duration: 100, useNativeDriver: true }),
+      Animated.timing(shakeAnimation, { toValue: -10, duration: 100, useNativeDriver: true }),
+      Animated.timing(shakeAnimation, { toValue: 10, duration: 100, useNativeDriver: true }),
+      Animated.timing(shakeAnimation, { toValue: 0, duration: 100, useNativeDriver: true }),
   ]).start();
+  };
 
-  // Nettoyer les champs au montage du composant
-  dispatchFormState({
-    inputId: 'password',
-    validationResult: undefined,
-    inputValue: '',
-  });
-  dispatchFormState({
-    inputId: 'confirmPassword',
-    validationResult: undefined,
-    inputValue: '',
-  });
-}, [fadeAnimation, slideAnimation]);
+  // Gestion des changements de PIN
+  const handlePinChange = (text: string, index: number, isConfirm = false) => {
+    if (text.length > 1) return;
+    
+    const currentPin = isConfirm ? [...confirmPin] : [...newPin];
+    currentPin[index] = text;
+    
+    if (isConfirm) {
+      setConfirmPin(currentPin);
+    } else {
+      setNewPin(currentPin);
+    }
 
-  const inputChangedHandler = useCallback(
-    (inputId: string, inputValue: string) => {
-      const result = validateInput(inputId, inputValue);
-      dispatchFormState({
-        inputId,
-        validationResult: result,
-        inputValue,
-      });
+    // Focus sur le champ suivant
+    if (text && index < 3) {
+      const refs = isConfirm ? confirmInputRefs : inputRefs;
+      refs.current[index + 1]?.focus();
+    }
+  };
 
-      // Calculate password strength
-      if (inputId === 'password') {
-        calculatePasswordStrength(inputValue);
+  // Gestion du retour arrière
+  const handleKeyPress = (e: any, index: number, isConfirm = false) => {
+    if (e.nativeEvent.key === 'Backspace') {
+      const currentPin = isConfirm ? [...confirmPin] : [...newPin];
+      
+      if (currentPin[index] === '' && index > 0) {
+        const refs = isConfirm ? confirmInputRefs : inputRefs;
+        refs.current[index - 1]?.focus();
       }
-    },
-    [dispatchFormState]
-  );
-
-  const calculatePasswordStrength = (password: string) => {
-    let strength = 0;
-    
-    // Length check
-    if (password.length >= 8) strength += 25;
-    
-    // Uppercase check
-    if (/[A-Z]/.test(password)) strength += 25;
-    
-    // Lowercase check
-    if (/[a-z]/.test(password)) strength += 25;
-    
-    // Number or special character check
-    if (/[0-9!@#$%^&*(),.?":{}|<>]/.test(password)) strength += 25;
-    
-    setPasswordStrength(strength);
+    }
   };
 
-  const getPasswordStrengthColor = () => {
-    if (passwordStrength <= 25) return COLORS.red;
-    if (passwordStrength <= 50) return COLORS.orange;
-    if (passwordStrength <= 75) return COLORS.yellow;
-    return COLORS.green;
-  };
-
-  const getPasswordStrengthText = () => {
-    if (passwordStrength <= 25) return 'Faible';
-    if (passwordStrength <= 50) return 'Moyen';
-    if (passwordStrength <= 75) return 'Fort';
-    return 'Très fort';
-  };
-
-  const validatePasswords = () => {
-    const { password, confirmPassword } = formState.inputValues;
-
-    if (!password || password.length < 8) {
-      Alert.alert('Mot de passe trop court', 'Le mot de passe doit contenir au moins 8 caractères');
-      return false;
+  const handlePinSubmit = () => {
+    const pinValue = newPin.join('');
+    if (pinValue.length !== 4) {
+      shakePin();
+      Alert.alert('Erreur', 'Veuillez saisir un code PIN à 4 chiffres.');
+      return;
     }
 
-    if (password !== confirmPassword) {
-      Alert.alert('Mots de passe différents', 'Les mots de passe ne correspondent pas');
-      return false;
-    }
-
-    if (passwordStrength < 50) {
-      Alert.alert(
-        'Mot de passe faible',
-        'Votre mot de passe doit contenir au moins une majuscule, une minuscule et un chiffre ou caractère spécial',
-        [
-          { text: 'Continuer quand même', onPress: () => handleCreatePassword() },
-          { text: 'Modifier', style: 'cancel' }
-        ]
-      );
-      return false;
-    }
-
-    return true;
+    setCurrentStep('confirmPin');
+    // Focus automatique sur le premier champ de confirmation
+    setTimeout(() => confirmInputRefs.current[0]?.focus(), 100);
   };
 
-  const handleCreatePassword = async () => {
-    if (!validatePasswords()) return;
+  const handleConfirmPinSubmit = async () => {
+    const pinValue = newPin.join('');
+    const confirmPinValue = confirmPin.join('');
+    
+    if (confirmPinValue.length !== 4) {
+      shakePin();
+      Alert.alert('Erreur', 'Veuillez confirmer votre code PIN à 4 chiffres.');
+      return;
+    }
+
+    if (pinValue !== confirmPinValue) {
+      shakePin();
+      setConfirmPin(['', '', '', '']);
+      Alert.alert('Erreur', 'Les codes PIN ne correspondent pas. Veuillez réessayer.');
+      // Focus sur le premier champ de confirmation
+      confirmInputRefs.current[0]?.focus();
+      return;
+    }
 
     setIsLoading(true);
 
     try {
-      // Simulation de création de mot de passe
-      setTimeout(() => {
-        setIsLoading(false);
+      // Simulation de création du PIN
+      await new Promise(resolve => setTimeout(resolve, 2000));
+      
         Alert.alert(
-          'Mot de passe créé',
-          'Votre nouveau mot de passe a été créé avec succès !',
+        'Code PIN créé',
+        'Votre nouveau code PIN a été créé avec succès !',
           [{
             text: 'Se connecter',
             onPress: () => router.replace('/login')
           }]
         );
-      }, 2000);
-    } catch {
+    } catch (error) {
+      console.error('Erreur création PIN:', error);
+      Alert.alert('Erreur', 'Impossible de créer le code PIN. Veuillez réessayer.');
+    } finally {
       setIsLoading(false);
-      Alert.alert('Erreur', 'Impossible de créer le mot de passe. Veuillez réessayer.');
     }
   };
 
-  const passwordRequirements = [
-    { text: 'Au moins 8 caractères', met: formState.inputValues.password.length >= 8 },
-    { text: 'Une majuscule', met: /[A-Z]/.test(formState.inputValues.password) },
-    { text: 'Une minuscule', met: /[a-z]/.test(formState.inputValues.password) },
-    { text: 'Un chiffre ou caractère spécial', met: /[0-9!@#$%^&*(),.?":{}|<>]/.test(formState.inputValues.password) },
-  ];
-
   return (
     <SafeAreaView style={[styles.area, { backgroundColor: colors.background }]}>
-      <KeyboardAvoidingView
-        style={styles.container}
-        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-      >
         <LinearGradient
           colors={[
             dark ? COLORS.dark1 : COLORS.white,
             dark ? COLORS.dark2 : COLORS.tertiaryWhite,
           ]}
-          style={styles.gradientContainer}
+        style={styles.container}
         >
           {/* Header */}
           <View style={styles.header}>
@@ -219,197 +145,146 @@ const CreateNewPassword = () => {
               />
             </TouchableOpacity>
             <Text style={[styles.headerTitle, { color: colors.text }]}>
-              Nouveau mot de passe
+            Nouveau code PIN
             </Text>
             <View style={styles.headerSpacer} />
           </View>
 
           <ScrollView showsVerticalScrollIndicator={false} style={styles.scrollView}>
-            <Animated.View
-              style={[
-                styles.content,
-                { 
-                  opacity: fadeAnimation,
-                  transform: [{ translateY: slideAnimation }]
-                }
-              ]}
-            >
-              {/* Illustration */}
-              <View style={styles.illustrationContainer}>
+          {/* Logo */}
+          <View style={styles.logoContainer}>
                 <Image
-                  source={dark ? illustrations.passwordDark : illustrations.password}
+              source={illustrations.password}
                   resizeMode="contain"
                   style={styles.illustration}
                 />
               </View>
 
-              {/* Content */}
+          {currentStep === 'pin' ? (
+            // Étape 1: Création du nouveau PIN
               <View style={styles.contentContainer}>
                 <Text style={[styles.title, { color: colors.text }]}>
-                  Créer un nouveau mot de passe
+                Créer un nouveau code PIN
                 </Text>
                 <Text style={[styles.subtitle, { color: dark ? COLORS.grayscale400 : COLORS.grayscale700 }]}>
-                  Votre nouveau mot de passe doit être différent des mots de passe précédents et sécurisé.
+                Choisissez un code PIN à 4 chiffres pour sécuriser votre compte
                 </Text>
 
-                {/* Password Input */}
-                <View style={styles.passwordContainer}>
-                  <Text style={[styles.inputLabel, { color: colors.text }]}>
-                    Nouveau mot de passe
-                  </Text>
-                  <View style={styles.inputWrapper}>
-                    <Input
-                      id="password"
-                      onInputChanged={inputChangedHandler}
-                      errorText={formState.inputValidities.password ? [formState.inputValidities.password] : undefined}
-                      autoCapitalize="none"
-                      placeholder="Saisissez votre nouveau mot de passe"
-                      placeholderTextColor={dark ? COLORS.grayTie : COLORS.grayscale600}
-                      icon={icons.padlock}
-                      secureTextEntry={!showPassword}
-                    />
-                    <TouchableOpacity
-                      style={styles.passwordToggle}
-                      onPress={() => setShowPassword(!showPassword)}
-                    >
-                      <Ionicons
-                        name={showPassword ? 'eye-off' : 'eye'}
-                        size={20}
-                        color={dark ? COLORS.grayscale400 : COLORS.grayscale600}
-                      />
-                    </TouchableOpacity>
-                  </View>
-
-                  {/* Password Strength */}
-                  {formState.inputValues.password.length > 0 && (
-                    <View style={styles.strengthContainer}>
-                      <View style={styles.strengthBar}>
-                        <View
+              <Animated.View
+                style={[
+                  styles.pinContainer,
+                  { transform: [{ translateX: shakeAnimation }] }
+                ]}
+              >
+                {newPin.map((digit, index) => (
+                  <TextInput
+                    key={index}
+                    ref={(ref) => {
+                      if (ref) inputRefs.current[index] = ref;
+                    }}
                           style={[
-                            styles.strengthFill,
-                            {
-                              width: `${passwordStrength}%`,
-                              backgroundColor: getPasswordStrengthColor(),
-                            },
-                          ]}
-                        />
-                      </View>
-                      <Text style={[styles.strengthText, { color: getPasswordStrengthColor() }]}>
-                        {getPasswordStrengthText()}
-                      </Text>
-                    </View>
-                  )}
-                </View>
+                      styles.pinInput,
+                      {
+                        backgroundColor: dark ? COLORS.dark3 : COLORS.white,
+                        borderColor: digit 
+                          ? COLORS.primary 
+                          : dark ? COLORS.dark3 : COLORS.grayscale200,
+                        color: colors.text,
+                      }
+                    ]}
+                    value={digit}
+                    onChangeText={(text) => handlePinChange(text, index)}
+                    onKeyPress={(e) => handleKeyPress(e, index)}
+                    keyboardType="number-pad"
+                    maxLength={1}
+                    secureTextEntry
+                    selectTextOnFocus
+                    textContentType="oneTimeCode"
+                  />
+                ))}
+              </Animated.View>
 
-                {/* Confirm Password Input */}
-                <View style={styles.passwordContainer}>
-                  <Text style={[styles.inputLabel, { color: colors.text }]}>
-                    Confirmer le mot de passe
-                  </Text>
-                  <View style={styles.inputWrapper}>
-                    <Input
-                      id="confirmPassword"
-                      onInputChanged={inputChangedHandler}
-                      errorText={formState.inputValidities.confirmPassword ? [formState.inputValidities.confirmPassword] : undefined}
-                      autoCapitalize="none"
-                      placeholder="Confirmez votre nouveau mot de passe"
-                      placeholderTextColor={dark ? COLORS.grayTie : COLORS.grayscale600}
-                      icon={icons.padlock}
-                      secureTextEntry={!showConfirmPassword}
-                    />
+              <Button
+                title="Continuer"
+                filled
+                onPress={handlePinSubmit}
+                style={styles.button}
+                disabled={newPin.join('').length !== 4}
+              />
+
                     <TouchableOpacity
-                      style={styles.passwordToggle}
-                      onPress={() => setShowConfirmPassword(!showConfirmPassword)}
-                    >
-                      <Ionicons
-                        name={showConfirmPassword ? 'eye-off' : 'eye'}
-                        size={20}
-                        color={dark ? COLORS.grayscale400 : COLORS.grayscale600}
-                      />
+                style={styles.backContainer}
+                onPress={() => router.back()}
+              >
+                <Text style={styles.backText}>
+                  Retour
+                </Text>
                     </TouchableOpacity>
                   </View>
+          ) : (
+            // Étape 2: Confirmation du PIN
+            <View style={styles.contentContainer}>
+              <Text style={[styles.title, { color: colors.text }]}>
+                Confirmer votre code PIN
+              </Text>
+              <Text style={[styles.subtitle, { color: dark ? COLORS.grayscale400 : COLORS.grayscale700 }]}>
+                Saisissez à nouveau votre code PIN pour le confirmer
+              </Text>
 
-                  {/* Password Match Indicator */}
-                  {formState.inputValues.confirmPassword.length > 0 && (
-                    <View style={styles.matchIndicator}>
-                      <Ionicons
-                        name={
-                          formState.inputValues.password === formState.inputValues.confirmPassword
-                            ? 'checkmark-circle'
-                            : 'close-circle'
-                        }
-                        size={16}
-                        color={
-                          formState.inputValues.password === formState.inputValues.confirmPassword
-                            ? COLORS.green
-                            : COLORS.red
-                        }
-                      />
-                      <Text
+              <Animated.View
                         style={[
-                          styles.matchText,
-                          {
-                            color:
-                              formState.inputValues.password === formState.inputValues.confirmPassword
-                                ? COLORS.green
-                                : COLORS.red,
-                          },
-                        ]}
-                      >
-                        {formState.inputValues.password === formState.inputValues.confirmPassword
-                          ? 'Les mots de passe correspondent'
-                          : 'Les mots de passe ne correspondent pas'}
-                      </Text>
-                    </View>
-                  )}
-                </View>
-
-                {/* Password Requirements */}
-                <View style={[styles.requirementsContainer, { backgroundColor: dark ? COLORS.dark3 : COLORS.grayscale100 }]}>
-                  <Text style={[styles.requirementsTitle, { color: colors.text }]}>
-                    Exigences du mot de passe :
-                  </Text>
-                  {passwordRequirements.map((requirement, index) => (
-                    <View key={index} style={styles.requirementItem}>
-                      <Ionicons
-                        name={requirement.met ? 'checkmark-circle' : 'ellipse-outline'}
-                        size={16}
-                        color={requirement.met ? COLORS.green : COLORS.grayscale400}
-                      />
-                      <Text
+                  styles.pinContainer,
+                  { transform: [{ translateX: shakeAnimation }] }
+                ]}
+              >
+                {confirmPin.map((digit, index) => (
+                  <TextInput
+                    key={index}
+                    ref={(ref) => {
+                      if (ref) confirmInputRefs.current[index] = ref;
+                    }}
                         style={[
-                          styles.requirementText,
-                          {
-                            color: requirement.met
-                              ? COLORS.green
-                              : dark ? COLORS.grayscale400 : COLORS.grayscale700,
-                          },
-                        ]}
-                      >
-                        {requirement.text}
-                      </Text>
-                    </View>
-                  ))}
-                </View>
+                      styles.pinInput,
+                      {
+                        backgroundColor: dark ? COLORS.dark3 : COLORS.white,
+                        borderColor: digit 
+                          ? COLORS.primary 
+                          : dark ? COLORS.dark3 : COLORS.grayscale200,
+                        color: colors.text,
+                      }
+                    ]}
+                    value={digit}
+                    onChangeText={(text) => handlePinChange(text, index, true)}
+                    onKeyPress={(e) => handleKeyPress(e, index, true)}
+                    keyboardType="number-pad"
+                    maxLength={1}
+                    secureTextEntry
+                    selectTextOnFocus
+                    textContentType="oneTimeCode"
+                  />
+                ))}
+              </Animated.View>
 
-                {/* Create Button */}
                 <Button
-                  title={isLoading ? 'Création...' : 'Créer le mot de passe'}
+                title={isLoading ? 'Création...' : 'Créer le code PIN'}
                   filled
-                  onPress={handleCreatePassword}
-                  style={styles.createButton}
-                  disabled={
-                    isLoading ||
-                    !formState.inputValues.password ||
-                    !formState.inputValues.confirmPassword ||
-                    formState.inputValues.password !== formState.inputValues.confirmPassword
-                  }
-                />
+                onPress={handleConfirmPinSubmit}
+                style={styles.button}
+                disabled={isLoading || confirmPin.join('').length !== 4}
+              />
+
+              <TouchableOpacity
+                style={styles.backContainer}
+                onPress={() => setCurrentStep('pin')}
+              >
+                <Text style={styles.backText}>
+                  Retour au nouveau PIN
+                </Text>
+              </TouchableOpacity>
               </View>
-            </Animated.View>
+          )}
           </ScrollView>
         </LinearGradient>
-      </KeyboardAvoidingView>
     </SafeAreaView>
   );
 };
@@ -419,9 +294,6 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   container: {
-    flex: 1,
-  },
-  gradientContainer: {
     flex: 1,
   },
   header: {
@@ -436,12 +308,13 @@ const styles = StyleSheet.create({
     width: 40,
     height: 40,
     borderRadius: 20,
+    backgroundColor: 'rgba(0,0,0,0.1)',
     alignItems: 'center',
     justifyContent: 'center',
   },
   headerTitle: {
     fontSize: 18,
-    fontFamily: 'semiBold',
+    fontFamily: 'bold',
   },
   headerSpacer: {
     width: 40,
@@ -449,20 +322,18 @@ const styles = StyleSheet.create({
   scrollView: {
     flex: 1,
   },
-  content: {
-    flex: 1,
-  },
-  illustrationContainer: {
+  logoContainer: {
     alignItems: 'center',
-    marginVertical: 20,
+    justifyContent: 'center',
+    marginVertical: 40,
   },
   illustration: {
-    width: 200,
-    height: 150,
+    width: 280,
+    height: 200,
   },
   contentContainer: {
-    paddingHorizontal: 16,
-    paddingBottom: 20,
+    paddingHorizontal: 24,
+    paddingBottom: 32,
   },
   title: {
     fontSize: 28,
@@ -474,78 +345,43 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontFamily: 'regular',
     textAlign: 'center',
+    marginBottom: 40,
     lineHeight: 24,
-    marginBottom: 32,
   },
-  passwordContainer: {
-    marginBottom: 24,
-  },
-  inputLabel: {
-    fontSize: 16,
-    fontFamily: 'semiBold',
-    marginBottom: 8,
-  },
-  inputWrapper: {
-    position: 'relative',
-  },
-  passwordToggle: {
-    position: 'absolute',
-    right: 16,
-    top: 20,
-    zIndex: 1,
-  },
-  strengthContainer: {
-    marginTop: 12,
-  },
-  strengthBar: {
-    height: 4,
-    backgroundColor: COLORS.grayscale200,
-    borderRadius: 2,
-    overflow: 'hidden',
-    marginBottom: 8,
-  },
-  strengthFill: {
-    height: '100%',
-    borderRadius: 2,
-  },
-  strengthText: {
-    fontSize: 12,
-    fontFamily: 'semiBold',
-    textAlign: 'right',
-  },
-  matchIndicator: {
+  pinContainer: {
     flexDirection: 'row',
+    justifyContent: 'space-between',
     alignItems: 'center',
-    marginTop: 8,
+    paddingHorizontal: 20,
+    marginVertical: 32,
   },
-  matchText: {
-    fontSize: 12,
-    fontFamily: 'medium',
-    marginLeft: 6,
-  },
-  requirementsContainer: {
-    padding: 16,
+  pinInput: {
+    width: 60,
+    height: 60,
     borderRadius: 12,
-    marginBottom: 24,
+    borderWidth: 2,
+    fontSize: 24,
+    fontFamily: 'bold',
+    textAlign: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 3,
   },
-  requirementsTitle: {
-    fontSize: 16,
-    fontFamily: 'semiBold',
-    marginBottom: 12,
+  button: {
+    marginTop: 32,
+    marginBottom: 16,
   },
-  requirementItem: {
-    flexDirection: 'row',
+  backContainer: {
     alignItems: 'center',
-    marginBottom: 8,
+    marginTop: 16,
   },
-  requirementText: {
-    fontSize: 14,
-    fontFamily: 'regular',
-    marginLeft: 8,
-  },
-  createButton: {
-    borderRadius: 30,
+  backText: {
+    fontSize: 16,
+    fontFamily: 'medium',
+    color: COLORS.primary,
   },
 });
 
-export default CreateNewPassword;
+export default CreateNewPin;

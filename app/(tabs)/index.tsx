@@ -64,6 +64,7 @@ const Home: React.FC<HomeProps> = () => {
         </View>
       </View>
       <View style={styles.viewRight}>
+
         <TouchableOpacity onPress={() => navigation.navigate("notifications")}>
           <Image
             source={icons.notificationBell2}
@@ -173,6 +174,7 @@ const Home: React.FC<HomeProps> = () => {
         keyExtractor={(item) => item.id}
         horizontal
         showsHorizontalScrollIndicator={false}
+        nestedScrollEnabled={true}
         renderItem={({ item }: { item: EstateItem }) => (
           <FeaturedEstateCard
             image={item.image}
@@ -238,6 +240,7 @@ const Home: React.FC<HomeProps> = () => {
           showsHorizontalScrollIndicator={false}
           horizontal
           renderItem={renderCategoryItem}
+          nestedScrollEnabled={true}
         />
         <View style={{
           backgroundColor: dark ? COLORS.dark1 : COLORS.secondaryWhite,
@@ -248,6 +251,8 @@ const Home: React.FC<HomeProps> = () => {
             keyExtractor={(item) => item.id}
             numColumns={2}
             columnWrapperStyle={{ gap: 16 }}
+            scrollEnabled={false}
+            nestedScrollEnabled={true}
             renderItem={({ item }: { item: EstateItem }) => (
               <VerticalEstateCard
                 name={item.name}
@@ -268,12 +273,16 @@ const Home: React.FC<HomeProps> = () => {
     <SafeAreaView style={[styles.area, { backgroundColor: colors.background }]}>
       <View style={[styles.container, { backgroundColor: colors.background }]}>
         {renderHeader()}
-        <View style={{ flex: 1 }}>
+        <ScrollView 
+          style={{ flex: 1 }}
+          showsVerticalScrollIndicator={false}
+          nestedScrollEnabled={true}
+        >
           {renderSearchBar()}
           {renderBanner()}
           {renderFeaturedEstates()}
           {renderOurRecommendationEstates()}
-        </View>
+        </ScrollView>
       </View>
     </SafeAreaView>
   );
@@ -322,6 +331,17 @@ const styles = StyleSheet.create({
   viewRight: {
     flexDirection: "row",
     alignItems: "center"
+  },
+  proButton: {
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    borderRadius: 20,
+    marginRight: 12,
+  },
+  proButtonText: {
+    color: COLORS.white,
+    fontSize: 12,
+    fontFamily: "semiBold",
   },
   bellIcon: {
     height: 24,

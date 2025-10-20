@@ -23,7 +23,7 @@ type Nav = {
   navigate: (value: string) => void
 }
 
-const ReasonForUsingReasa = () => {
+const ReasonForUsingDodo = () => {
   const { navigate } = useNavigation<Nav>();
   const { colors, dark } = useTheme();
   const [selectedReasons, setSelectedReasons] = useState<string[]>([]);
@@ -67,7 +67,7 @@ const ReasonForUsingReasa = () => {
         <ScrollView showsVerticalScrollIndicator={false}>
           <Text style={[styles.title, {
             color: dark ? COLORS.white : COLORS.greyscale900
-          }]}>Reason for Using Reasa</Text>
+          }]}>Reason for Using Dodo</Text>
           <Text style={[styles.subtitle, {
             color: dark ? COLORS.white : COLORS.greyscale900
           }]}>We want to provide the best experience according to your needs.</Text>
@@ -139,4 +139,4 @@ const styles = StyleSheet.create({
   }
 })
 
-export default ReasonForUsingReasa
+export default ReasonForUsingDodo
