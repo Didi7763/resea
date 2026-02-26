@@ -1,0 +1,26 @@
+{
+  "name": "dodo-chatbot-backend",
+  "version": "1.0.0",
+  "description": "Microservice Node.js pour le chatbot semi-automatique de réservation Dodo",
+  "main": "app.js",
+  "scripts": {
+    "start": "node app.js",
+    "dev": "nodemon app.js"
+  },
+  "keywords": [
+    "chatbot",
+    "reservation",
+    "dodo"
+  ],
+  "author": "",
+  "license": "MIT",
+  "dependencies": {
+    "cors": "^2.8.5",
+    "dotenv": "^16.4.5",
+    "express": "^4.19.2",
+    "nanoid": "^5.0.7"
+  },
+  "devDependencies": {
+    "nodemon": "^3.1.4"
+  }
+}

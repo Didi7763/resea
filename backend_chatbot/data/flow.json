@@ -1,0 +1,102 @@
+{
+  "welcome": {
+    "message": "Bonjour ! Je suis Dodo, ton assistant de réservation. Souhaites-tu réserver une résidence ?",
+    "type": "choice",
+    "options": ["Oui", "Non"],
+    "next": {
+      "Oui": "ask_type",
+      "Non": "goodbye"
+    }
+  },
+  "ask_type": {
+    "message": "Quel type de logement cherches-tu ? (Chambre / Suite / Studio)",
+    "type": "choice",
+    "options": ["Chambre", "Suite", "Studio"],
+    "storeAs": "type",
+    "next": "ask_city"
+  },
+  "ask_city": {
+    "message": "Dans quelle ville ou quel quartier souhaites-tu loger ?",
+    "type": "input",
+    "storeAs": "city",
+    "next": "ask_dates"
+  },
+  "ask_dates": {
+    "message": "Peux-tu me donner tes dates d’arrivée et de départ ? (ex : du 10 au 13 novembre 2025)",
+    "type": "input",
+    "storeAs": "dates",
+    "next": "ask_people"
+  },
+  "ask_people": {
+    "message": "Pour combien de personnes souhaites-tu réserver ?",
+    "type": "input",
+    "storeAs": "people",
+    "next": "ask_budget"
+  },
+  "ask_budget": {
+    "message": "As-tu un budget maximum par nuit ? (facultatif)",
+    "type": "input",
+    "storeAs": "budget",
+    "optional": true,
+    "next": "ask_preferences"
+  },
+  "ask_preferences": {
+    "message": "Souhaites-tu des équipements particuliers ? (ex : Wi-Fi, clim, parking, piscine)",
+    "type": "input",
+    "storeAs": "preferences",
+    "optional": true,
+    "next": "ask_name"
+  },
+  "ask_name": {
+    "message": "Peux-tu me donner ton nom complet, s’il te plaît ?",
+    "type": "input",
+    "storeAs": "name",
+    "next": "ask_contact"
+  },
+  "ask_contact": {
+    "message": "Merci ! Quel est ton numéro WhatsApp ou téléphone pour confirmer la réservation ?",
+    "type": "input",
+    "storeAs": "contact",
+    "next": "ask_email"
+  },
+  "ask_email": {
+    "message": "Souhaites-tu aussi recevoir un e-mail de confirmation ? Si oui, donne-moi ton adresse (facultatif)",
+    "type": "input",
+    "storeAs": "email",
+    "optional": true,
+    "next": "summary"
+  },
+  "summary": {
+    "message": "Voici le résumé de ta demande :\n- Type : {type}\n- Ville : {city}\n- Dates : {dates}\n- Personnes : {people}\n- Budget : {budget}\n- Préférences : {preferences}\n- Contact : {contact}\n- Email : {email}\nSouhaites-tu confirmer la réservation ? (Oui / Non)",
+    "type": "choice",
+    "options": ["Oui", "Non"],
+    "next": {
+      "Oui": "confirmation",
+      "Non": "goodbye"
+    }
+  },
+  "confirmation": {
+    "message": "Parfait ! Ta demande a été envoyée au propriétaire. Il te contactera rapidement pour confirmer la disponibilité.",
+    "type": "end",
+    "next": "handoff"
+  },
+  "handoff": {
+    "message": "Souhaites-tu parler à un agent humain maintenant ? (Oui / Non)",
+    "type": "choice",
+    "options": ["Oui", "Non"],
+    "next": {
+      "Oui": "agent_transfer",
+      "Non": "goodbye"
+    }
+  },
+  "agent_transfer": {
+    "message": "Super, un agent Dodo va te contacter tout de suite pour finaliser les détails.",
+    "type": "end",
+    "next": null
+  },
+  "goodbye": {
+    "message": "Merci d’avoir discuté avec Dodo. Reviens quand tu veux pour explorer d’autres résidences !",
+    "type": "end",
+    "next": null
+  }
+}

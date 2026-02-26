@@ -289,7 +289,6 @@ const Home: React.FC<HomeProps> = () => {
 };
 
 const styles = StyleSheet.create({
-  // (styles remain unchanged)
   area: {
     flex: 1,
     backgroundColor: COLORS.white

@@ -7,7 +7,7 @@ import Button from '@/components/Button';
 import { useTheme } from '@/theme/ThemeProvider';
 import { COLORS, SIZES, icons, images } from '@/constants';
 import { launchImagePicker } from '@/utils/ImagePickerHelper';
-import { useNavigation } from 'expo-router';
+import { useNavigation, useRouter } from 'expo-router';
 import SettingsItem from '@/components/SettingsItem';
 
 type Nav = {
@@ -18,6 +18,7 @@ const Profile = () => {
   const refRBSheet = useRef<any>(null);
   const { dark, colors, setScheme } = useTheme();
   const { navigate } = useNavigation<Nav>();
+  const router = useRouter();
 
   const renderHeader = () => {
     return (
@@ -57,7 +58,7 @@ const Profile = () => {
 
       // Set the image
       setImage({ uri: tempUri })
-    } catch (error) {
+    } catch {
     }
   };
 
@@ -211,6 +212,11 @@ const Profile = () => {
           icon={icons.infoCircle}
           name="Help Center"
           onPress={() => navigate("settingshelpcenter")}
+        />
+        <SettingsItem
+          icon={icons.chatBubble}
+          name="Parler à Dodo"
+          onPress={() => router.push('/chatbot' as never)}
         />
         <SettingsItem
           icon={icons.people4}
